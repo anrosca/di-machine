@@ -1,9 +1,6 @@
 package com.dimachine.core;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class AbstractBeanRegistry implements BeanRegistry {
@@ -12,8 +9,8 @@ public abstract class AbstractBeanRegistry implements BeanRegistry {
     protected final DefaultObjectFactory objectFactory = new DefaultObjectFactory();
 
     @Override
-    public void registerBean(BeanDefinition beanDefinition) {
-        beanDefinitions.add(beanDefinition);
+    public void registerBean(BeanDefinition...beanDefinitions) {
+        this.beanDefinitions.addAll(Arrays.asList(beanDefinitions));
     }
 
     protected abstract Object instantiateSingleton(BeanDefinition beanDefinition);

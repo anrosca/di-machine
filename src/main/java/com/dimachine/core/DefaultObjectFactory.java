@@ -1,20 +1,29 @@
 package com.dimachine.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 public class DefaultObjectFactory implements ObjectFactory {
+    private static final Logger log = LoggerFactory.getLogger(DefaultObjectFactory.class);
+
     @Override
-    public Object instantiate(Class<?> clazz, DefaultBeanFactory beanFactory) {
+    public Object instantiate(Class<?> beanClass, DefaultBeanFactory beanFactory) {
         try {
-            Constructor<?>[] declaredConstructors = clazz.getDeclaredConstructors();
-            Constructor<?> constructor = getGreediestParamConstructor(declaredConstructors, beanFactory, clazz);
+            Constructor<?>[] declaredConstructors = beanClass.getDeclaredConstructors();
+            Constructor<?> constructor = getGreediestParamConstructor(declaredConstructors, beanFactory, beanClass);
+            if (constructor == null)
+                throw new BeanCannotBeInstantiatedException("Bean of type " + beanClass + " cannot be instantiated " +
+                        "because it has no default constructor");
             registerBeanDependencies(constructor.getParameterTypes(), beanFactory);
             constructor.setAccessible(true);
             Object[] constructorArguments = getConstructorArguments(constructor, beanFactory);
             return constructor.newInstance(constructorArguments);
         } catch (IllegalAccessException | InstantiationException | InvocationTargetException e) {
-            throw new RuntimeException(e);
+            log.error("Failed to instantiate singleton bean of type " + beanClass, e);
+            throw new BeanInstantiationException("Failed to instantiate bean of type " + beanClass, e);
         }
     }
 
