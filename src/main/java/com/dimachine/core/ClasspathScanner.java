@@ -7,6 +7,7 @@ import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -20,8 +21,8 @@ public class ClasspathScanner {
         this.packagesToScan = packagesToScan;
     }
 
-    public Set<BeanDefinition> scan() {
-        Set<BeanDefinition> foundBeanDefinitions = new HashSet<>();
+    public List<BeanDefinition> scan() {
+        List<BeanDefinition> foundBeanDefinitions = new ArrayList<>();
         try (ScanResult scanResult = new ClassGraph().enableAllInfo().acceptPackages(packagesToScan).scan()) {
             for (Class<?> scannedAnnotation : targetAnnotations) {
                 String routeAnnotation = scannedAnnotation.getName();

@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public abstract class AbstractBeanRegistry implements BeanRegistry {
     protected final Map<BeanDefinition, Object> singletonBeans = new ConcurrentHashMap<>();
     protected final List<BeanDefinition> beanDefinitions = Collections.synchronizedList(new ArrayList<>());
-    private final DefaultObjectFactory objectFactory = new DefaultObjectFactory();
+    protected final DefaultObjectFactory objectFactory = new DefaultObjectFactory();
 
     @Override
     public void registerBean(BeanDefinition beanDefinition) {
@@ -16,7 +16,5 @@ public abstract class AbstractBeanRegistry implements BeanRegistry {
         }
     }
 
-    private Object instantiateSingleton(BeanDefinition beanDefinition) {
-        return objectFactory.instantiate(beanDefinition.getBeanClass());
-    }
+    protected abstract Object instantiateSingleton(BeanDefinition beanDefinition);
 }

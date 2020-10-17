@@ -4,7 +4,13 @@ import com.dimachine.core.annotation.Component;
 
 @Component("funky")
 public class TestBean {
+    private final FooService fooService;
+
+    public TestBean(FooService fooService) {
+        this.fooService = fooService;
+    }
+
     public void greet() {
-        System.out.println("Hello, world!");
+        fooService.foo();
     }
 }

@@ -1,7 +1,9 @@
 package com.dimachine.core;
 
+import java.lang.reflect.Constructor;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFactory, BeanRegistry {
     private final ClasspathScanner classpathScanner;
@@ -59,7 +61,36 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
 
     @Override
     public void refresh() {
-        Set<BeanDefinition> beanDefinitions = classpathScanner.scan();
+        List<BeanDefinition> beanDefinitions = classpathScanner.scan();
+        sortBeanDefinitionsByConstructorGreediness(beanDefinitions);
         beanDefinitions.forEach(this::registerBean);
+    }
+
+    private void sortBeanDefinitionsByConstructorGreediness(List<BeanDefinition> beanDefinitions) {
+        beanDefinitions.sort(new Comparator<BeanDefinition>() {
+            @Override
+            public int compare(BeanDefinition first, BeanDefinition second) {
+                Class<?> firstBeanClass = first.getBeanClass();
+                Class<?> secondBeanClass = second.getBeanClass();
+                int firstGreediestConstructor = getGreediestConstructorParameterCount(firstBeanClass);
+                int secondGreediestConstructor = getGreediestConstructorParameterCount(secondBeanClass);
+                return Integer.compare(firstGreediestConstructor, secondGreediestConstructor);
+            }
+
+            private int getGreediestConstructorParameterCount(Class<?> clazz) {
+                int parameterCount = 0;
+                Constructor<?>[] declaredConstructors = clazz.getDeclaredConstructors();
+                for (Constructor<?> constructor : declaredConstructors) {
+                    if (constructor.getParameterTypes().length > parameterCount) {
+                        parameterCount = constructor.getParameterTypes().length;
+                    }
+                }
+                return parameterCount;
+            }
+        });
+    }
+
+    protected Object instantiateSingleton(BeanDefinition beanDefinition) {
+        return objectFactory.instantiate(beanDefinition.getBeanClass(), this);
     }
 }
