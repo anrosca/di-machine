@@ -2,13 +2,14 @@ package com.dimachine.core;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 
 public class DefaultObjectFactory implements ObjectFactory {
     @Override
     public Object instantiate(Class<?> clazz, BeanFactory beanFactory) {
         try {
             Constructor<?>[] declaredConstructors = clazz.getDeclaredConstructors();
-            Constructor<?> constructor = getGreediestParamConstructor(declaredConstructors, beanFactory);
+            Constructor<?> constructor = getGreediestParamConstructor(declaredConstructors, beanFactory, clazz);
             constructor.setAccessible(true);
             Object[] constructorArguments = getConstructorArguments(constructor, beanFactory);
             return constructor.newInstance(constructorArguments);
@@ -27,19 +28,35 @@ public class DefaultObjectFactory implements ObjectFactory {
         return arguments;
     }
 
-    private Constructor<?> getGreediestParamConstructor(Constructor<?>[] declaredConstructors, BeanFactory beanFactory) {
+    private Constructor<?> getGreediestParamConstructor(Constructor<?>[] declaredConstructors, BeanFactory beanFactory, Class<?> beanClass) {
         for (Constructor<?> constructor : declaredConstructors) {
             Class<?>[] parameterTypes = constructor.getParameterTypes();
             if (!isDefaultConstructor(constructor)) {
                 boolean canSatisfyParameters = true;
                 for (Class<?> parameterType : parameterTypes) {
-                    canSatisfyParameters &= beanFactory.contains(parameterType);
+                    canSatisfyParameters &= beanFactory.containsBeanDefinitionOfType(parameterType);
                 }
-                if (canSatisfyParameters)
+                if (canSatisfyParameters) {
+                    checkForCycles(constructor, beanClass);
                     return constructor;
+                }
             }
         }
         return detDefaultConstructor(declaredConstructors);
+    }
+
+    private void checkForCycles(Constructor<?> constructor, Class<?> beanClass) {
+        Class<?>[] constructorParameterTypes = constructor.getParameterTypes();
+        for (Class<?> parameterClass : constructorParameterTypes) {
+            Constructor<?>[] declaredConstructors = parameterClass.getDeclaredConstructors();
+            for (Constructor<?> dependencyConstructor : declaredConstructors) {
+                Class<?>[] dependenciesTypes = dependencyConstructor.getParameterTypes();
+                for (Class<?> dependencyClass : dependenciesTypes) {
+                    if (dependencyClass.equals(beanClass))
+                        throw new BeanCurrentlyInCreationException("Circular dependency between " + beanClass + " and " + parameterClass);
+                }
+            }
+        }
     }
 
     private boolean isDefaultConstructor(Constructor<?> constructor) {

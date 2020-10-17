@@ -1,6 +1,5 @@
 package com.dimachine.core.test;
 
-import com.dimachine.core.annotation.Component;
 import com.dimachine.core.annotation.Service;
 
 @Service

@@ -8,7 +8,7 @@ import java.util.Map;
 public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFactory, BeanRegistry {
     private final ClasspathScanner classpathScanner;
 
-    public DefaultBeanFactory(String...packagesToScan) {
+    public DefaultBeanFactory(String... packagesToScan) {
         this.classpathScanner = new ClasspathScanner(packagesToScan);
     }
 
@@ -60,10 +60,25 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     }
 
     @Override
+    public <T> boolean containsBeanDefinitionOfType(Class<T> clazz) {
+        return beanDefinitions.stream()
+                .anyMatch(beanDefinition -> clazz.isAssignableFrom(beanDefinition.getBeanClass()));
+    }
+
+    @Override
     public void refresh() {
         List<BeanDefinition> beanDefinitions = classpathScanner.scan();
         sortBeanDefinitionsByConstructorGreediness(beanDefinitions);
         beanDefinitions.forEach(this::registerBean);
+        instantiateSingletonBeans();
+    }
+
+    private void instantiateSingletonBeans() {
+        beanDefinitions.forEach((beanDefinition) -> {
+            if (beanDefinition.isSingleton()) {
+                singletonBeans.put(beanDefinition, instantiateSingleton(beanDefinition));
+            }
+        });
     }
 
     private void sortBeanDefinitionsByConstructorGreediness(List<BeanDefinition> beanDefinitions) {
