@@ -43,4 +43,33 @@ public class SimpleBeanDefinition implements BeanDefinition {
             throw new RuntimeException(e);
         }
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SimpleBeanDefinition that = (SimpleBeanDefinition) o;
+
+        if (!className.equals(that.className)) return false;
+        if (!beanName.equals(that.beanName)) return false;
+        return scope == that.scope;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = className.hashCode();
+        result = 31 * result + beanName.hashCode();
+        result = 31 * result + scope.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "SimpleBeanDefinition{" +
+                "className='" + className + '\'' +
+                ", beanName='" + beanName + '\'' +
+                ", scope=" + scope +
+                '}';
+    }
 }

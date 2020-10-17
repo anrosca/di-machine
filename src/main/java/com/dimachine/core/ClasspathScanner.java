@@ -1,40 +1,47 @@
 package com.dimachine.core;
 
 import com.dimachine.core.annotation.Component;
+import com.dimachine.core.annotation.Service;
 import io.github.classgraph.AnnotationInfo;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class ClasspathScanner {
     private final String[] packagesToScan;
+    private final BeanNamer beanNamer = new DefaultBeanNamer();
+    private final List<Class<?>> targetAnnotations = List.of(Component.class, Service.class);
 
-    public ClasspathScanner(String[] packagesToScan) {
+    public ClasspathScanner(String...packagesToScan) {
         this.packagesToScan = packagesToScan;
     }
 
     public Set<BeanDefinition> scan() {
         Set<BeanDefinition> foundBeanDefinitions = new HashSet<>();
-        String routeAnnotation = Component.class.getName();
-        try (ScanResult scanResult =
-                     new ClassGraph()
-                             .enableAllInfo()
-                             .acceptPackages(packagesToScan)
-                             .scan()) {
-            for (ClassInfo routeClassInfo : scanResult.getClassesWithAnnotation(routeAnnotation)) {
-                AnnotationInfo routeAnnotationInfo = routeClassInfo.getAnnotationInfo(routeAnnotation);
-                String className = routeClassInfo.getName();
-                BeanDefinition beanDefinition = new SimpleBeanDefinition(className, makeBeanName(className));
-                foundBeanDefinitions.add(beanDefinition);
+        try (ScanResult scanResult = new ClassGraph().enableAllInfo().acceptPackages(packagesToScan).scan()) {
+            for (Class<?> scannedAnnotation : targetAnnotations) {
+                String routeAnnotation = scannedAnnotation.getName();
+                for (ClassInfo routeClassInfo : scanResult.getClassesWithAnnotation(routeAnnotation)) {
+                    BeanDefinition beanDefinition = makeBeanDefinition(routeAnnotation, routeClassInfo);
+                    foundBeanDefinitions.add(beanDefinition);
+                }
             }
         }
         return foundBeanDefinitions;
     }
 
-    private String makeBeanName(String className) {
-        return className.substring(className.lastIndexOf(".") + 1);
+    private BeanDefinition makeBeanDefinition(String routeAnnotation, ClassInfo routeClassInfo) {
+        AnnotationInfo routeAnnotationInfo = routeClassInfo.getAnnotationInfo(routeAnnotation);
+        String explicitBeanName = (String) routeAnnotationInfo.getParameterValues().getValue("value");
+        String className = routeClassInfo.getName();
+        return new SimpleBeanDefinition(className, makeBeanName(className, explicitBeanName));
+    }
+
+    private String makeBeanName(String className, String explicitBeanName) {
+        return explicitBeanName.isEmpty() ? beanNamer.makeBeanName(className) : explicitBeanName;
     }
 }

@@ -1,6 +1,6 @@
 package com.dimachine.core;
 
-import com.dimachine.core.test.TestBean;
+import com.dimachine.core._component.TestComponentWithoutExplicitName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -45,7 +45,7 @@ public class DefaultBeanFactoryTest {
         beanFactory.registerBean(beanDefinition);
         beanFactory.refresh();
 
-        assertTrue(beanFactory.contains(TestBean.class));
+        assertTrue(beanFactory.contains(TestComponentWithoutExplicitName.class));
     }
 
     @Test
