@@ -13,4 +13,8 @@ public interface BeanFactory {
     <T> boolean contains(Class<T> clazz);
 
     <T> boolean containsBeanDefinitionOfType(Class<T> clazz);
+
+    BeanDefinition getBeanDefinition(Class<?> beanClass);
+
+    void registerSingleton(BeanDefinition beanDefinition, Object instance);
 }

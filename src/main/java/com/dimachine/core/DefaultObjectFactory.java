@@ -2,19 +2,28 @@ package com.dimachine.core;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
 
 public class DefaultObjectFactory implements ObjectFactory {
     @Override
-    public Object instantiate(Class<?> clazz, BeanFactory beanFactory) {
+    public Object instantiate(Class<?> clazz, DefaultBeanFactory beanFactory) {
         try {
             Constructor<?>[] declaredConstructors = clazz.getDeclaredConstructors();
             Constructor<?> constructor = getGreediestParamConstructor(declaredConstructors, beanFactory, clazz);
+            registerBeanDependencies(constructor.getParameterTypes(), beanFactory);
             constructor.setAccessible(true);
             Object[] constructorArguments = getConstructorArguments(constructor, beanFactory);
             return constructor.newInstance(constructorArguments);
         } catch (IllegalAccessException | InstantiationException | InvocationTargetException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void registerBeanDependencies(Class<?>[] beans, DefaultBeanFactory beanFactory) {
+        for (Class<?> beanClass : beans) {
+            if (!beanFactory.contains(beanClass)) {
+                BeanDefinition beanDefinition = beanFactory.getBeanDefinition(beanClass);
+                beanFactory.registerSingleton(beanDefinition, beanFactory.instantiateSingleton(beanDefinition));
+            }
         }
     }
 

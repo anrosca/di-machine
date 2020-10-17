@@ -1,6 +1,7 @@
 package com.dimachine.core;
 
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -66,16 +67,33 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     }
 
     @Override
+    public BeanDefinition getBeanDefinition(Class<?> beanClass) {
+        return beanDefinitions.stream()
+                .filter(beanDefinition -> beanClass.isAssignableFrom(beanDefinition.getBeanClass()))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchBeanDefinitionException("No bean of type " + beanClass + " found"));
+    }
+
+    @Override
+    public void registerSingleton(BeanDefinition beanDefinition, Object instance) {
+        if (beanDefinition.isSingleton()) {
+            singletonBeans.put(beanDefinition, instance);
+            beanDefinitions.add(beanDefinition);
+        }
+    }
+
+    @Override
     public void refresh() {
         List<BeanDefinition> beanDefinitions = classpathScanner.scan();
-        sortBeanDefinitionsByConstructorGreediness(beanDefinitions);
+//        sortBeanDefinitionsByConstructorGreediness(beanDefinitions);
         beanDefinitions.forEach(this::registerBean);
         instantiateSingletonBeans();
     }
 
     private void instantiateSingletonBeans() {
-        beanDefinitions.forEach((beanDefinition) -> {
-            if (beanDefinition.isSingleton()) {
+        List<BeanDefinition> beanDefinitionsToProcess = new ArrayList<>(this.beanDefinitions);
+        beanDefinitionsToProcess.forEach((beanDefinition) -> {
+            if (beanDefinition.isSingleton() && !contains(beanDefinition.getBeanClass())) {
                 singletonBeans.put(beanDefinition, instantiateSingleton(beanDefinition));
             }
         });
