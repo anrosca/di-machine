@@ -7,7 +7,8 @@ public class DefaultObjectFactory implements ObjectFactory {
     @Override
     public Object instantiate(Class<?> clazz) {
         try {
-            Constructor<?> constructor = clazz.getConstructor();
+            Constructor<?> constructor = clazz.getDeclaredConstructor();
+            constructor.setAccessible(true);
             return constructor.newInstance();
         } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
             throw new RuntimeException(e);

@@ -1,13 +1,10 @@
 package com.dimachine.core;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
+import java.util.Set;
 
-public class DefaultBeanFactory implements BeanFactory, BeanRegistry {
-    private final Map<BeanDefinition, Object> singletonBeans = new ConcurrentHashMap<>();
-    private final List<BeanDefinition> beanDefinitions = Collections.synchronizedList(new ArrayList<>());
+public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFactory, BeanRegistry {
     private final ClasspathScanner classpathScanner;
-    private final DefaultObjectFactory objectFactory = new DefaultObjectFactory();
 
     public DefaultBeanFactory(String...packagesToScan) {
         this.classpathScanner = new ClasspathScanner(packagesToScan);
@@ -25,7 +22,14 @@ public class DefaultBeanFactory implements BeanFactory, BeanRegistry {
 
     @Override
     public <T> T getBean(String name, Class<T> clazz) {
-        return null;
+        return singletonBeans.entrySet()
+                .stream()
+                .filter(beanEntry -> beanEntry.getKey().getBeanName().equals(name))
+                .filter(beanEntry -> clazz.isAssignableFrom(beanEntry.getKey().getBeanClass()))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .map(clazz::cast)
+                .orElseThrow(() -> new NoSuchBeanDefinitionException("No bean with name " + name + " and type " + clazz + " found"));
     }
 
     @Override
@@ -40,20 +44,22 @@ public class DefaultBeanFactory implements BeanFactory, BeanRegistry {
     }
 
     @Override
-    public void registerBean(BeanDefinition beanDefinition) {
-        beanDefinitions.add(beanDefinition);
-        if (beanDefinition.isSingleton()) {
-            singletonBeans.put(beanDefinition, instantiateSingleton(beanDefinition));
-        }
+    public boolean contains(String beanName) {
+        return singletonBeans.entrySet()
+                .stream()
+                .anyMatch(beanEntry -> beanEntry.getKey().getBeanName().equals(beanName));
+    }
+
+    @Override
+    public <T> boolean contains(Class<T> clazz) {
+        return singletonBeans.entrySet()
+                .stream()
+                .anyMatch(beanEntry -> clazz.isAssignableFrom(beanEntry.getKey().getBeanClass()));
     }
 
     @Override
     public void refresh() {
         Set<BeanDefinition> beanDefinitions = classpathScanner.scan();
         beanDefinitions.forEach(this::registerBean);
-    }
-
-    private Object instantiateSingleton(BeanDefinition beanDefinition) {
-        return objectFactory.instantiate(beanDefinition.getBeanClass());
     }
 }
