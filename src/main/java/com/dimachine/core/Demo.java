@@ -7,6 +7,5 @@ public class Demo {
         DefaultBeanFactory beanFactory = new DefaultBeanFactory("com.dimachine.core.test");
         beanFactory.refresh();
         TestBean bean = beanFactory.getBean(TestBean.class);
-        bean.greet();
     }
 }

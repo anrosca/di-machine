@@ -1,8 +1,8 @@
 package com.dimachine.core;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import com.dimachine.core.annotation.Ordered;
+
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFactory, BeanRegistry {
@@ -11,7 +11,19 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
 
     public DefaultBeanFactory(String... packagesToScan) {
-        this.classpathScanner = new ClasspathScanner(packagesToScan);
+        String currentPackage = getCurrentPackage();
+        this.classpathScanner = new ClasspathScanner(makePackagesToScan(currentPackage, packagesToScan));
+    }
+
+    protected String[] makePackagesToScan(String currentPackage, String[] packagesToScan) {
+        List<String> resultingPackages = new ArrayList<>();
+        resultingPackages.add(currentPackage);
+        resultingPackages.addAll(Arrays.asList(packagesToScan));
+        return resultingPackages.toArray(new String[0]);
+    }
+
+    private String getCurrentPackage() {
+        return getClass().getPackageName();
     }
 
     @Override
@@ -103,8 +115,27 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     }
 
     private void invokeBeanPostProcessors() {
+        orderBeanPostProcessors();
         postProcessBeforeInitialisation();
         postProcessAfterInitialisation();
+    }
+
+    private void orderBeanPostProcessors() {
+        beanPostProcessors.sort(new Comparator<>() {
+            @Override
+            public int compare(BeanPostProcessor first, BeanPostProcessor second) {
+                return Integer.compare(getOrder(first), getOrder(second));
+            }
+
+            private int getOrder(BeanPostProcessor processor) {
+                Class<?> processorClass = processor.getClass();
+                if (processorClass.isAnnotationPresent(Ordered.class)) {
+                    Ordered ordered = processorClass.getAnnotation(Ordered.class);
+                    return ordered.value().getPrecedence();
+                }
+                return Order.DEFAULT_PRECEDENCE.getPrecedence();
+            }
+        });
     }
 
     private void postProcessBeforeInitialisation() {

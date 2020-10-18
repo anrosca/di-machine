@@ -1,5 +1,6 @@
 package com.dimachine.core;
 
+import com.dimachine.core.postprocessor.PostConstructAnnotationBeanPostProcessor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -149,10 +150,10 @@ public class DefaultBeanFactoryTest {
     }
 
     @Test
-    public void shouldInvokeBeanPostProcessorsAfterSingletonInstantiation() {
+    public void shouldSortBeanPostProcessorsAccordingToTheirOrder() {
         SimpleBeanDefinition beanDefinition = SimpleBeanDefinition.builder()
-                .className(TargetBean.class.getName())
-                .beanName("testBean")
+                .className(PostConstructAnnotationBeanPostProcessor.class.getName())
+                .beanName("postConstruct")
                 .build();
         SimpleBeanDefinition beanPostProcessorDefinition = SimpleBeanDefinition.builder()
                 .className(BeanPostProcessorSpy.class.getName())
@@ -160,11 +161,6 @@ public class DefaultBeanFactoryTest {
                 .build();
         beanFactory.registerBeans(beanDefinition, beanPostProcessorDefinition);
         beanFactory.refresh();
-
-        Comparable<?> bean = beanFactory.getBean(Comparable.class);
-
-        assertNotNull(bean);
-        assertNotEquals(bean.getClass(), TargetBean.class);
     }
 
     private static class TargetBean implements Comparable<TargetBean> {
