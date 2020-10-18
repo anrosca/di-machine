@@ -14,7 +14,7 @@ public class DefaultObjectFactoryTest {
     @Test
     public void shouldBeAbleToMakeSingletonBean_withDefaultConstructor() {
         SimpleBeanDefinition beanDefinition = makeBeanDefinitionFor(TestFooService.class);
-        defaultBeanFactory.registerBean(beanDefinition);
+        defaultBeanFactory.registerBeans(beanDefinition);
 
         Object createdInstance = objectFactory.instantiate(TestFooService.class, defaultBeanFactory);
 
@@ -26,7 +26,7 @@ public class DefaultObjectFactoryTest {
     public void shouldThrowBeanCurrentlyInCreationException_whenThereAreCyclicDependencies() {
         SimpleBeanDefinition fooServiceDefinition = makeBeanDefinitionFor(CyclicFooService.class);
         SimpleBeanDefinition barServiceDefinition = makeBeanDefinitionFor(CyclicBarService.class);
-        defaultBeanFactory.registerBean(fooServiceDefinition, barServiceDefinition);
+        defaultBeanFactory.registerBeans(fooServiceDefinition, barServiceDefinition);
 
         assertThrows(BeanCurrentlyInCreationException.class, () -> objectFactory.instantiate(CyclicFooService.class, defaultBeanFactory));
     }
@@ -35,7 +35,7 @@ public class DefaultObjectFactoryTest {
     public void shouldBeAbleToMakeSingletonBean_withOneConstructorParameter() {
         SimpleBeanDefinition fooServiceDefinition = makeBeanDefinitionFor(TestFooService.class);
         SimpleBeanDefinition barServiceDefinition = makeBeanDefinitionFor(TestBarService.class);
-        defaultBeanFactory.registerBean(fooServiceDefinition, barServiceDefinition);
+        defaultBeanFactory.registerBeans(fooServiceDefinition, barServiceDefinition);
 
         Object createdInstance = objectFactory.instantiate(TestBarService.class, defaultBeanFactory);
         assertNotNull(createdInstance);
@@ -46,7 +46,7 @@ public class DefaultObjectFactoryTest {
     public void shouldBeAbleToMakeSingletonBean_withChoosingConstructorThatCanBeSatisfied() {
         SimpleBeanDefinition fooServiceDefinition = makeBeanDefinitionFor(ManyConstructorsFooService.class);
         SimpleBeanDefinition barServiceDefinition = makeBeanDefinitionFor(TestFooService.class);
-        defaultBeanFactory.registerBean(fooServiceDefinition, barServiceDefinition);
+        defaultBeanFactory.registerBeans(fooServiceDefinition, barServiceDefinition);
 
         Object createdInstance = objectFactory.instantiate(ManyConstructorsFooService.class, defaultBeanFactory);
         assertNotNull(createdInstance);
@@ -56,7 +56,7 @@ public class DefaultObjectFactoryTest {
     @Test
     public void shouldThrowBeanCannotBeInstantiatedException_whenNoMatchingConstructorsAreFound() {
         SimpleBeanDefinition beanDefinition = makeBeanDefinitionFor(TestBarService.class);
-        defaultBeanFactory.registerBean(beanDefinition);
+        defaultBeanFactory.registerBeans(beanDefinition);
 
         assertThrows(BeanCannotBeInstantiatedException.class, () -> objectFactory.instantiate(TestBarService.class, defaultBeanFactory));
     }
@@ -64,7 +64,7 @@ public class DefaultObjectFactoryTest {
     @Test
     public void shouldThrowBeanInstantiationException_whenBeanInstantiationFails() {
         SimpleBeanDefinition beanDefinition = makeBeanDefinitionFor(ExceptionFooService.class);
-        defaultBeanFactory.registerBean(beanDefinition);
+        defaultBeanFactory.registerBeans(beanDefinition);
 
         assertThrows(BeanInstantiationException.class, () -> objectFactory.instantiate(ExceptionFooService.class, defaultBeanFactory));
     }

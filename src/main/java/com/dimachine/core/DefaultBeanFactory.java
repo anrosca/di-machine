@@ -1,8 +1,6 @@
 package com.dimachine.core;
 
-import java.lang.reflect.Constructor;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -85,45 +83,18 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     @Override
     public void refresh() {
         List<BeanDefinition> beanDefinitions = classpathScanner.scan();
-//        sortBeanDefinitionsByConstructorGreediness(beanDefinitions);
-        beanDefinitions.forEach(this::registerBean);
+        beanDefinitions.forEach(this::registerBeans);
         instantiateSingletonBeans();
     }
 
     private void instantiateSingletonBeans() {
         List<BeanDefinition> beanDefinitionsToProcess = new ArrayList<>(this.beanDefinitions);
-        beanDefinitionsToProcess.forEach((beanDefinition) -> {
-            if (beanDefinition.isSingleton() && !contains(beanDefinition.getBeanClass())) {
-                singletonBeans.put(beanDefinition, instantiateSingleton(beanDefinition));
-            }
-        });
+        beanDefinitionsToProcess.forEach(this::makeSingletonIfNeeded);
     }
 
-    private void sortBeanDefinitionsByConstructorGreediness(List<BeanDefinition> beanDefinitions) {
-        beanDefinitions.sort(new Comparator<BeanDefinition>() {
-            @Override
-            public int compare(BeanDefinition first, BeanDefinition second) {
-                Class<?> firstBeanClass = first.getBeanClass();
-                Class<?> secondBeanClass = second.getBeanClass();
-                int firstGreediestConstructor = getGreediestConstructorParameterCount(firstBeanClass);
-                int secondGreediestConstructor = getGreediestConstructorParameterCount(secondBeanClass);
-                return Integer.compare(firstGreediestConstructor, secondGreediestConstructor);
-            }
-
-            private int getGreediestConstructorParameterCount(Class<?> clazz) {
-                int parameterCount = 0;
-                Constructor<?>[] declaredConstructors = clazz.getDeclaredConstructors();
-                for (Constructor<?> constructor : declaredConstructors) {
-                    if (constructor.getParameterTypes().length > parameterCount) {
-                        parameterCount = constructor.getParameterTypes().length;
-                    }
-                }
-                return parameterCount;
-            }
-        });
-    }
-
-    protected Object instantiateSingleton(BeanDefinition beanDefinition) {
-        return objectFactory.instantiate(beanDefinition.getBeanClass(), this);
+    private void makeSingletonIfNeeded(BeanDefinition beanDefinition) {
+        if (beanDefinition.isSingleton() && !contains(beanDefinition.getBeanClass())) {
+            singletonBeans.put(beanDefinition, objectFactory.instantiate(beanDefinition.getBeanClass(), this));
+        }
     }
 }

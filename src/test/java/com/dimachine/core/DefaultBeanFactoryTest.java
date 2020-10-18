@@ -12,7 +12,7 @@ public class DefaultBeanFactoryTest {
 
     @Test
     public void shouldBeAbleToGetBeanByName_whenItIsPresentInBeanFactory() {
-        beanFactory.registerBean(beanDefinition);
+        beanFactory.registerBeans(beanDefinition);
         beanFactory.refresh();
 
         Object bean = beanFactory.getBean("testBean");
@@ -23,7 +23,7 @@ public class DefaultBeanFactoryTest {
 
     @Test
     public void shouldBeAbleToGetBeanByType_whenItIsPresentInBeanFactory() {
-        beanFactory.registerBean(beanDefinition);
+        beanFactory.registerBeans(beanDefinition);
         beanFactory.refresh();
 
         TargetBean bean = beanFactory.getBean(TargetBean.class);
@@ -34,7 +34,7 @@ public class DefaultBeanFactoryTest {
 
     @Test
     public void shouldBeAbleToFindBeanByName_whenItIsPresentInBeanFactory() {
-        beanFactory.registerBean(beanDefinition);
+        beanFactory.registerBeans(beanDefinition);
         beanFactory.refresh();
 
         assertTrue(beanFactory.contains("testBean"));
@@ -42,7 +42,7 @@ public class DefaultBeanFactoryTest {
 
     @Test
     public void shouldBeAbleToFindBeanByType_whenItIsPresentInBeanFactory() {
-        beanFactory.registerBean(beanDefinition);
+        beanFactory.registerBeans(beanDefinition);
         beanFactory.refresh();
 
         assertTrue(beanFactory.contains(TestComponentWithoutExplicitName.class));
@@ -50,7 +50,7 @@ public class DefaultBeanFactoryTest {
 
     @Test
     public void shouldNotBeAbleToFindBeanByType_whenItIsNotPresentInBeanFactory() {
-        beanFactory.registerBean(beanDefinition);
+        beanFactory.registerBeans(beanDefinition);
         beanFactory.refresh();
 
         assertFalse(beanFactory.contains(ObjectFactory.class));
@@ -58,7 +58,7 @@ public class DefaultBeanFactoryTest {
 
     @Test
     public void shouldNotFindBeanByName_whenItIsNotPresentInBeanFactory() {
-        beanFactory.registerBean(beanDefinition);
+        beanFactory.registerBeans(beanDefinition);
         beanFactory.refresh();
 
         assertFalse(beanFactory.contains("transactionManager"));
@@ -67,7 +67,7 @@ public class DefaultBeanFactoryTest {
     @Test
     public void shouldBeAbleToGetBeanByTypeAndName_whenItIsPresentInBeanFactory() {
         SimpleBeanDefinition beanDefinition = new SimpleBeanDefinition(TargetBean.class.getName(), "testBean");
-        beanFactory.registerBean(beanDefinition);
+        beanFactory.registerBeans(beanDefinition);
         beanFactory.refresh();
 
         TargetBean bean = beanFactory.getBean("testBean", TargetBean.class);
@@ -79,7 +79,7 @@ public class DefaultBeanFactoryTest {
     @Test
     public void shouldBeAbleToGetBeanByAssignableTypeAndName_whenItIsPresentInBeanFactory() {
         SimpleBeanDefinition beanDefinition = new SimpleBeanDefinition(TargetBean.class.getName(), "testBean");
-        beanFactory.registerBean(beanDefinition);
+        beanFactory.registerBeans(beanDefinition);
         beanFactory.refresh();
 
         Comparable<?> bean = beanFactory.getBean("testBean", Comparable.class);

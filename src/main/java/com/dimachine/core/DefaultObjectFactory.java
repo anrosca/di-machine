@@ -36,7 +36,7 @@ public class DefaultObjectFactory implements ObjectFactory {
         for (Class<?> beanClass : beans) {
             if (!beanFactory.contains(beanClass)) {
                 BeanDefinition beanDefinition = beanFactory.getBeanDefinition(beanClass);
-                beanFactory.registerSingleton(beanDefinition, beanFactory.instantiateSingleton(beanDefinition));
+                beanFactory.registerSingleton(beanDefinition, instantiate(beanDefinition.getBeanClass(), beanFactory));
             }
         }
     }

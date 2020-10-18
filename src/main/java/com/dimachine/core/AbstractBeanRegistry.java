@@ -9,9 +9,7 @@ public abstract class AbstractBeanRegistry implements BeanRegistry {
     protected final DefaultObjectFactory objectFactory = new DefaultObjectFactory();
 
     @Override
-    public void registerBean(BeanDefinition...beanDefinitions) {
+    public void registerBeans(BeanDefinition...beanDefinitions) {
         this.beanDefinitions.addAll(Arrays.asList(beanDefinitions));
     }
-
-    protected abstract Object instantiateSingleton(BeanDefinition beanDefinition);
 }
