@@ -106,8 +106,18 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
                 .map(beanDefinitionMaker::makeBeanDefinition)
                 .collect(Collectors.toList());
         beanDefinitions.forEach(this::registerBeans);
+        registerBeanFactory();
         instantiateSingletonBeans();
         invokeBeanPostProcessors();
+    }
+
+    private void registerBeanFactory() {
+        BeanDefinition beanDefinition = SimpleBeanDefinition.builder()
+                .className(getClass().getName())
+                .beanName("beanFactory")
+                .build();
+        beanDefinitions.add(beanDefinition);
+        singletonBeans.put(beanDefinition, this);
     }
 
     protected List<String> scanClasspath() {
@@ -180,6 +190,7 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     }
 
     private boolean isBeanPostProcessor(Object beanInstance) {
-        return beanInstance instanceof BeanPostProcessor;
+        return beanInstance instanceof BeanPostProcessor ||
+                beanInstance instanceof BeanFactory;
     }
 }

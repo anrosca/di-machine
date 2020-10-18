@@ -4,6 +4,7 @@ import com.dimachine.core.annotation.Scope;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ScopeResolverTest {
 
@@ -28,6 +29,11 @@ public class ScopeResolverTest {
         BeanScope resolvedScope = scopeResolver.resolveScope(SingletonTestBean.class.getName());
 
         assertEquals(BeanScope.SINGLETON, resolvedScope);
+    }
+
+    @Test
+    public void shouldThrowBeanClassMissingException_whenBeanClassCannotBeLoaded() {
+        assertThrows(BeanClassMissingException.class, () -> scopeResolver.resolveScope("<yay>"));
     }
 
     private static class TestBean {

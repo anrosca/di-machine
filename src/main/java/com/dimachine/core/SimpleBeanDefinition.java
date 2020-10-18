@@ -41,7 +41,8 @@ public class SimpleBeanDefinition implements BeanDefinition {
         try {
             return Class.forName(className);
         } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
+            throw new BeanClassMissingException("Bean class " + className +
+                    " could not be loaded", e);
         }
     }
 

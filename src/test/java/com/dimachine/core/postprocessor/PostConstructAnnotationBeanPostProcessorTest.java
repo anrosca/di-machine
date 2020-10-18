@@ -41,6 +41,13 @@ public class PostConstructAnnotationBeanPostProcessorTest {
         assertThrows(BeanInitialisationException.class, () -> beanPostProcessor.postProcessBeforeInitialisation(bean, "testBean"));
     }
 
+    @Test
+    public void shouldThrowBeanInitialisationException_whenInitMethodThrowsException() {
+        Object bean = new ExceptionInitMethodTestBean();
+
+        assertThrows(BeanInitialisationException.class, () -> beanPostProcessor.postProcessBeforeInitialisation(bean, "testBean"));
+    }
+
     private class InitMethodTestBean {
         @PostConstruct
         public void init() {
@@ -58,6 +65,13 @@ public class PostConstructAnnotationBeanPostProcessorTest {
     private static class IncorrectInitMethodTestBean {
         @PostConstruct
         private void init(String value) {
+        }
+    }
+
+    private static class ExceptionInitMethodTestBean {
+        @PostConstruct
+        private void init() {
+            throw new IllegalStateException();
         }
     }
 }
