@@ -12,19 +12,24 @@ public class DefaultObjectFactory implements ObjectFactory {
     @Override
     public Object instantiate(Class<?> beanClass, DefaultBeanFactory beanFactory) {
         try {
-            Constructor<?>[] declaredConstructors = beanClass.getDeclaredConstructors();
-            Constructor<?> constructor = getGreediestParamConstructor(declaredConstructors, beanFactory, beanClass);
-            if (constructor == null)
-                throw new BeanCannotBeInstantiatedException("Bean of type " + beanClass + " cannot be instantiated " +
-                        "because it has no default constructor");
-            registerBeanDependencies(constructor.getParameterTypes(), beanFactory);
-            constructor.setAccessible(true);
-            Object[] constructorArguments = getConstructorArguments(constructor, beanFactory);
-            return constructor.newInstance(constructorArguments);
+            return tryInstantiate(beanClass, beanFactory);
         } catch (IllegalAccessException | InstantiationException | InvocationTargetException e) {
             log.error("Failed to instantiate singleton bean of type " + beanClass, e);
             throw new BeanInstantiationException("Failed to instantiate bean of type " + beanClass, e);
         }
+    }
+
+    private Object tryInstantiate(Class<?> beanClass, DefaultBeanFactory beanFactory)
+            throws InstantiationException, IllegalAccessException, InvocationTargetException {
+        Constructor<?>[] declaredConstructors = beanClass.getDeclaredConstructors();
+        Constructor<?> constructor = getGreediestParamConstructor(declaredConstructors, beanFactory, beanClass);
+        if (constructor == null)
+            throw new BeanCannotBeInstantiatedException("Bean of type " + beanClass + " cannot be instantiated " +
+                    "because it has no default constructor");
+        registerBeanDependencies(constructor.getParameterTypes(), beanFactory);
+        constructor.setAccessible(true);
+        Object[] constructorArguments = getConstructorArguments(constructor, beanFactory);
+        return constructor.newInstance(constructorArguments);
     }
 
     private void registerBeanDependencies(Class<?>[] beans, DefaultBeanFactory beanFactory) {

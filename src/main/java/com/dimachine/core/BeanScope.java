@@ -1,6 +1,6 @@
 package com.dimachine.core;
 
-public enum Scope {
+public enum BeanScope {
     SINGLETON,
     PROTOTYPE
 }

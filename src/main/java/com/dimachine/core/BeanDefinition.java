@@ -5,7 +5,7 @@ public interface BeanDefinition {
 
     String getBeanName();
 
-    Scope getBeanScope();
+    BeanScope getBeanScope();
 
     boolean isSingleton();
 

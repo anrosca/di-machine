@@ -3,13 +3,13 @@ package com.dimachine.core;
 public class SimpleBeanDefinition implements BeanDefinition {
     private final String className;
     private final String beanName;
-    private final Scope scope;
+    private final BeanScope scope;
 
     public SimpleBeanDefinition(String className, String beanName) {
-        this(className, beanName, Scope.SINGLETON);
+        this(className, beanName, BeanScope.SINGLETON);
     }
 
-    public SimpleBeanDefinition(String className, String beanName, Scope scope) {
+    public SimpleBeanDefinition(String className, String beanName, BeanScope scope) {
         this.className = className;
         this.beanName = beanName;
         this.scope = scope;
@@ -26,13 +26,13 @@ public class SimpleBeanDefinition implements BeanDefinition {
     }
 
     @Override
-    public Scope getBeanScope() {
+    public BeanScope getBeanScope() {
         return scope;
     }
 
     @Override
     public boolean isSingleton() {
-        return scope == Scope.SINGLETON;
+        return scope == BeanScope.SINGLETON;
     }
 
     @Override
