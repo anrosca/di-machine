@@ -5,14 +5,10 @@ public class SimpleBeanDefinition implements BeanDefinition {
     private final String beanName;
     private final BeanScope scope;
 
-    public SimpleBeanDefinition(String className, String beanName) {
-        this(className, beanName, BeanScope.SINGLETON);
-    }
-
-    public SimpleBeanDefinition(String className, String beanName, BeanScope scope) {
-        this.className = className;
-        this.beanName = beanName;
-        this.scope = scope;
+    private SimpleBeanDefinition(SimpleBeanDefinitionBuilder builder) {
+        this.className = builder.className;
+        this.beanName = builder.beanName;
+        this.scope = builder.scope;
     }
 
     @Override
@@ -33,6 +29,11 @@ public class SimpleBeanDefinition implements BeanDefinition {
     @Override
     public boolean isSingleton() {
         return scope == BeanScope.SINGLETON;
+    }
+
+    @Override
+    public boolean isPrototype() {
+        return !isSingleton();
     }
 
     @Override
@@ -71,5 +72,34 @@ public class SimpleBeanDefinition implements BeanDefinition {
                 ", beanName='" + beanName + '\'' +
                 ", scope=" + scope +
                 '}';
+    }
+
+    public static SimpleBeanDefinitionBuilder builder() {
+        return new SimpleBeanDefinitionBuilder();
+    }
+
+    public static class SimpleBeanDefinitionBuilder {
+        private String className;
+        private String beanName;
+        private BeanScope scope = BeanScope.SINGLETON;
+
+        public SimpleBeanDefinitionBuilder className(String className) {
+            this.className = className;
+            return this;
+        }
+
+        public SimpleBeanDefinitionBuilder beanName(String beanName) {
+            this.beanName = beanName;
+            return this;
+        }
+
+        public SimpleBeanDefinitionBuilder scope(BeanScope scope) {
+            this.scope = scope;
+            return this;
+        }
+
+        public SimpleBeanDefinition build() {
+            return new SimpleBeanDefinition(this);
+        }
     }
 }

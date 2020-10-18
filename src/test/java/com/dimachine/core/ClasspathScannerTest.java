@@ -18,8 +18,14 @@ public class ClasspathScannerTest {
         List<BeanDefinition> foundBeanDefinitions = scanner.scan();
 
         assertEquals(List.of(
-                new SimpleBeanDefinition(TestComponentWithExplicitName.class.getName(), "explicitComponent"),
-                new SimpleBeanDefinition(TestComponentWithoutExplicitName.class.getName(), "testComponentWithoutExplicitName")
+                SimpleBeanDefinition.builder()
+                        .className(TestComponentWithExplicitName.class.getName())
+                        .beanName("explicitComponent")
+                        .build(),
+                SimpleBeanDefinition.builder()
+                        .className(TestComponentWithoutExplicitName.class.getName())
+                        .beanName("testComponentWithoutExplicitName")
+                        .build()
         ), foundBeanDefinitions);
     }
 
@@ -29,8 +35,14 @@ public class ClasspathScannerTest {
         List<BeanDefinition> foundBeanDefinitions = scanner.scan();
 
         assertEquals(List.of(
-                new SimpleBeanDefinition(TestServiceWithExplicitName.class.getName(), "explicitService"),
-                new SimpleBeanDefinition(TestServiceWithoutExplicitName.class.getName(), "testServiceWithoutExplicitName")
+                SimpleBeanDefinition.builder()
+                        .className(TestServiceWithExplicitName.class.getName())
+                        .beanName("explicitService")
+                        .build(),
+                SimpleBeanDefinition.builder()
+                        .className(TestServiceWithoutExplicitName.class.getName())
+                        .beanName("testServiceWithoutExplicitName")
+                        .build()
         ), foundBeanDefinitions);
     }
 }

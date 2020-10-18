@@ -8,7 +8,10 @@ import static org.junit.jupiter.api.Assertions.*;
 public class DefaultBeanFactoryTest {
 
     private final DefaultBeanFactory beanFactory = new DefaultBeanFactory();
-    private final SimpleBeanDefinition beanDefinition = new SimpleBeanDefinition(TargetBean.class.getName(), "testBean");
+    private final SimpleBeanDefinition beanDefinition = SimpleBeanDefinition.builder()
+            .className(TargetBean.class.getName())
+            .beanName("testBean")
+            .build();
 
     @Test
     public void shouldBeAbleToGetBeanByName_whenItIsPresentInBeanFactory() {
@@ -66,7 +69,10 @@ public class DefaultBeanFactoryTest {
 
     @Test
     public void shouldBeAbleToGetBeanByTypeAndName_whenItIsPresentInBeanFactory() {
-        SimpleBeanDefinition beanDefinition = new SimpleBeanDefinition(TargetBean.class.getName(), "testBean");
+        SimpleBeanDefinition beanDefinition = SimpleBeanDefinition.builder()
+                .className(TargetBean.class.getName())
+                .beanName("testBean")
+                .build();
         beanFactory.registerBeans(beanDefinition);
         beanFactory.refresh();
 
@@ -77,8 +83,33 @@ public class DefaultBeanFactoryTest {
     }
 
     @Test
+    public void shouldBeAbleToGetPrototypeBeanByType() {
+        SimpleBeanDefinition beanDefinition = SimpleBeanDefinition.builder()
+                .className(TargetBean.class.getName())
+                .beanName("testBean")
+                .scope(BeanScope.PROTOTYPE)
+                .build();
+        beanFactory.registerBeans(beanDefinition);
+        beanFactory.refresh();
+
+        TargetBean firstPrototype = beanFactory.getBean(TargetBean.class);
+        TargetBean secondPrototype = beanFactory.getBean(TargetBean.class);
+
+        assertNotNull(firstPrototype);
+        assertNotNull(secondPrototype);
+        assertEquals(TargetBean.class, firstPrototype.getClass());
+        assertEquals(TargetBean.class, secondPrototype.getClass());
+        assertFalse(beanFactory.contains(firstPrototype.getClass()));
+        assertFalse(beanFactory.contains(secondPrototype.getClass()));
+        assertNotSame(firstPrototype, secondPrototype);
+    }
+
+    @Test
     public void shouldBeAbleToGetBeanByAssignableTypeAndName_whenItIsPresentInBeanFactory() {
-        SimpleBeanDefinition beanDefinition = new SimpleBeanDefinition(TargetBean.class.getName(), "testBean");
+        SimpleBeanDefinition beanDefinition = SimpleBeanDefinition.builder()
+                .className(TargetBean.class.getName())
+                .beanName("testBean")
+                .build();
         beanFactory.registerBeans(beanDefinition);
         beanFactory.refresh();
 

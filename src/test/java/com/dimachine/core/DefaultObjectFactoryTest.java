@@ -70,7 +70,10 @@ public class DefaultObjectFactoryTest {
     }
 
     private SimpleBeanDefinition makeBeanDefinitionFor(Class<?> beanClass) {
-        return new SimpleBeanDefinition(beanClass.getName(), beanClass.getSimpleName());
+        return SimpleBeanDefinition.builder()
+                .className(beanClass.getName())
+                .beanName(beanClass.getSimpleName())
+                .build();
     }
 
     private static class TestFooService {

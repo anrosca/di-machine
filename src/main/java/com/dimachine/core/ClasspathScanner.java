@@ -14,8 +14,9 @@ public class ClasspathScanner {
     private final String[] packagesToScan;
     private final BeanNamer beanNamer = new DefaultBeanNamer();
     private final List<Class<?>> targetAnnotations = List.of(Component.class, Service.class);
+    private final ScopeResolver scopeResolver = new ScopeResolver();
 
-    public ClasspathScanner(String...packagesToScan) {
+    public ClasspathScanner(String... packagesToScan) {
         this.packagesToScan = packagesToScan;
     }
 
@@ -37,7 +38,11 @@ public class ClasspathScanner {
         AnnotationInfo routeAnnotationInfo = routeClassInfo.getAnnotationInfo(routeAnnotation);
         String explicitBeanName = (String) routeAnnotationInfo.getParameterValues().getValue("value");
         String className = routeClassInfo.getName();
-        return new SimpleBeanDefinition(className, makeBeanName(className, explicitBeanName));
+        return SimpleBeanDefinition.builder()
+                .className(className)
+                .beanName(makeBeanName(className, explicitBeanName))
+                .scope(scopeResolver.resolveScope(className))
+                .build();
     }
 
     private String makeBeanName(String className, String explicitBeanName) {

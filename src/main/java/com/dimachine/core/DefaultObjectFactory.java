@@ -10,7 +10,7 @@ public class DefaultObjectFactory implements ObjectFactory {
     private static final Logger log = LoggerFactory.getLogger(DefaultObjectFactory.class);
 
     @Override
-    public Object instantiate(Class<?> beanClass, DefaultBeanFactory beanFactory) {
+    public <T> T instantiate(Class<T> beanClass, DefaultBeanFactory beanFactory) {
         try {
             return tryInstantiate(beanClass, beanFactory);
         } catch (IllegalAccessException | InstantiationException | InvocationTargetException e) {
@@ -19,7 +19,8 @@ public class DefaultObjectFactory implements ObjectFactory {
         }
     }
 
-    private Object tryInstantiate(Class<?> beanClass, DefaultBeanFactory beanFactory)
+    @SuppressWarnings("unchecked")
+    private <T> T tryInstantiate(Class<T> beanClass, DefaultBeanFactory beanFactory)
             throws InstantiationException, IllegalAccessException, InvocationTargetException {
         Constructor<?>[] declaredConstructors = beanClass.getDeclaredConstructors();
         Constructor<?> constructor = getGreediestParamConstructor(declaredConstructors, beanFactory, beanClass);
@@ -29,7 +30,7 @@ public class DefaultObjectFactory implements ObjectFactory {
         registerBeanDependencies(constructor.getParameterTypes(), beanFactory);
         constructor.setAccessible(true);
         Object[] constructorArguments = getConstructorArguments(constructor, beanFactory);
-        return constructor.newInstance(constructorArguments);
+        return (T) constructor.newInstance(constructorArguments);
     }
 
     private void registerBeanDependencies(Class<?>[] beans, DefaultBeanFactory beanFactory) {

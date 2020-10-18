@@ -9,5 +9,7 @@ public interface BeanDefinition {
 
     boolean isSingleton();
 
+    boolean isPrototype();
+
     Class<?> getBeanClass();
 }

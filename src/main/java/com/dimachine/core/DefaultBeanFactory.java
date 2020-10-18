@@ -35,6 +35,10 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
 
     @Override
     public <T> T getBean(Class<T> clazz) {
+        BeanDefinition foundBeanDefinition = getBeanDefinition(clazz);
+        if (foundBeanDefinition.isPrototype()) {
+            return objectFactory.instantiate(clazz, this);
+        }
         return singletonBeans.entrySet()
                 .stream()
                 .filter(entry -> clazz.isAssignableFrom(entry.getKey().getBeanClass()))
@@ -69,7 +73,7 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
         return beanDefinitions.stream()
                 .filter(beanDefinition -> beanClass.isAssignableFrom(beanDefinition.getBeanClass()))
                 .findFirst()
-                .orElseThrow(() -> new NoSuchBeanDefinitionException("No bean of type " + beanClass + " found"));
+                .orElseThrow(() -> new NoSuchBeanDefinitionException("No bean definition of type " + beanClass + " found"));
     }
 
     @Override
