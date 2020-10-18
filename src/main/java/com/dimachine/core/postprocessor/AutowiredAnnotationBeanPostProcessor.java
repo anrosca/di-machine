@@ -5,9 +5,8 @@ import com.dimachine.core.annotation.Autowired;
 import com.dimachine.core.annotation.Component;
 import com.dimachine.core.annotation.Ordered;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
+import java.util.List;
 
 @Component
 @Ordered(Order.HIGHEST_PRECEDENCE)
@@ -82,10 +81,53 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
     protected void setField(Object bean, Field field) {
         try {
             field.setAccessible(true);
-            field.set(bean, beanFactory.getBean(field.getType()));
+            field.set(bean, resolveFieldValue(bean, field));
         } catch (IllegalAccessException e) {
             throw new FieldInjectionFailedException("Could not autowire field " + field.getName() +
                     " of bean " + bean.getClass(), e);
         }
+    }
+
+    private Object resolveFieldValue(Object bean, Field field) {
+        if (isCollection(field)) {
+            return resolveCollectionFieldValue(bean, field);
+        }
+        return beanFactory.getBean(field.getType());
+    }
+
+    private Object resolveCollectionFieldValue(Object bean, Field field) {
+        try {
+            return doResolveCollectionFieldValue(field);
+        } catch (ClassNotFoundException e) {
+            throw new FieldInjectionFailedException("Could not autowire field " + field.getName() +
+                    " of bean " + bean.getClass(), e);
+        }
+    }
+
+    private List<?> doResolveCollectionFieldValue(Field field) throws ClassNotFoundException {
+        ParameterizedType genericType = (ParameterizedType) field.getGenericType();
+        Type[] actualTypeArguments = genericType.getActualTypeArguments();
+        String dependencyTypeName = actualTypeArguments[0].getTypeName();
+        if (isWildcardType(dependencyTypeName)) {
+            dependencyTypeName = normalizeWildcardTypeName(dependencyTypeName, field);
+        }
+        Class<?> dependencyClass = Class.forName(dependencyTypeName);
+        return beanFactory.getAllBeansOfType(dependencyClass);
+    }
+
+    private String normalizeWildcardTypeName(String dependencyTypeName, Field field) {
+        String normalizedTypeName = dependencyTypeName.substring(dependencyTypeName.lastIndexOf(" ") + 1);
+        if (normalizedTypeName.contains("?"))
+            throw new FieldInjectionFailedException("Could not autowired field " + field.getName() +
+                    " because it's type is wildcard '" + normalizedTypeName + "'");
+        return normalizedTypeName;
+    }
+
+    private boolean isWildcardType(String dependencyTypeName) {
+        return dependencyTypeName.contains("?");
+    }
+
+    private boolean isCollection(Field field) {
+        return List.class.isAssignableFrom(field.getType());
     }
 }

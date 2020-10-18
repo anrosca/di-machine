@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Proxy;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -161,6 +162,20 @@ public class DefaultBeanFactoryTest {
                 .build();
         beanFactory.registerBeans(beanDefinition, beanPostProcessorDefinition);
         beanFactory.refresh();
+    }
+
+    @Test
+    public void shouldBeAbleToGetAllSingletonsOfGivenType() {
+        SimpleBeanDefinition secondBeanDefinition = SimpleBeanDefinition.builder()
+                .className(TargetBean.class.getName())
+                .beanName("yetAnotherTargetBean")
+                .build();
+        beanFactory.registerBeans(beanDefinition, secondBeanDefinition);
+        beanFactory.refresh();
+
+        List<TargetBean> beans = beanFactory.getAllBeansOfType(TargetBean.class);
+
+        assertEquals(2, new HashSet<>(beans).size());
     }
 
     private static class TargetBean implements Comparable<TargetBean> {

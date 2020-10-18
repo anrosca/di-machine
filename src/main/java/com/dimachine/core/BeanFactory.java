@@ -1,5 +1,7 @@
 package com.dimachine.core;
 
+import java.util.List;
+
 public interface BeanFactory {
 
     Object getBean(String name);
@@ -17,4 +19,6 @@ public interface BeanFactory {
     BeanDefinition getBeanDefinition(Class<?> beanClass);
 
     void registerSingleton(BeanDefinition beanDefinition, Object instance);
+
+    <T> List<T> getAllBeansOfType(Class<T> clazz);
 }

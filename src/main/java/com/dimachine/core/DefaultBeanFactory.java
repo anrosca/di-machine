@@ -100,6 +100,16 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     }
 
     @Override
+    public <T> List<T> getAllBeansOfType(Class<T> clazz) {
+        return singletonBeans.entrySet()
+                .stream()
+                .filter(beanEntry -> clazz.isAssignableFrom(beanEntry.getKey().getBeanClass()))
+                .map(Map.Entry::getValue)
+                .map(clazz::cast)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public void refresh() {
         List<String> scannedClasses = scanClasspath();
         List<BeanDefinition> beanDefinitions = scannedClasses.stream()
@@ -180,7 +190,7 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     }
 
     private void makeSingletonIfNeeded(BeanDefinition beanDefinition) {
-        if (beanDefinition.isSingleton() && !contains(beanDefinition.getBeanClass())) {
+        if (beanDefinition.isSingleton() && !singletonBeans.containsKey(beanDefinition)) {
             Object beanInstance = objectFactory.instantiate(beanDefinition.getBeanClass(), this);
             if (isBeanPostProcessor(beanInstance)) {
                 beanPostProcessors.add((BeanPostProcessor) beanInstance);

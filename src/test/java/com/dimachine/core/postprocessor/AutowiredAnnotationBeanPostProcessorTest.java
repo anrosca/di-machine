@@ -2,9 +2,12 @@ package com.dimachine.core.postprocessor;
 
 import com.dimachine.core.BeanFactory;
 import com.dimachine.core.BeanInitialisationException;
+import com.dimachine.core.FieldInjectionFailedException;
 import com.dimachine.core.annotation.Autowired;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -72,7 +75,39 @@ public class AutowiredAnnotationBeanPostProcessorTest {
         verifyNoInteractions(beanFactory);
     }
 
+    @Test
+    public void whenAutowiringListType_shouldInjectAllBeansOfThatType() {
+        List<FooService> expectedDependencies = List.of(new FooService(), new YetAnotherFooService());
+        when(beanFactory.getAllBeansOfType(FooService.class)).thenReturn(expectedDependencies);
+        AutowireListBarService bean = new AutowireListBarService();
+
+        postProcessor.postProcessBeforeInitialisation(bean, "testBean");
+
+        assertEquals(expectedDependencies, bean.fooServices);
+    }
+
+    @Test
+    public void whenAutowiringListWithWildcardType_shouldInjectAllBeansOfThatType() {
+        List<FooService> expectedDependencies = List.of(new FooService(), new YetAnotherFooService());
+        when(beanFactory.getAllBeansOfType(FooService.class)).thenReturn(expectedDependencies);
+        AutowireWildcardListBarService bean = new AutowireWildcardListBarService();
+
+        postProcessor.postProcessBeforeInitialisation(bean, "testBean");
+
+        assertEquals(expectedDependencies, bean.fooServices);
+    }
+
+    @Test
+    public void whenAutowiringListWithGenericWildcardType_shouldInjectAllBeansOfThatType() {
+        AutowireGenericWildcardListBarService bean = new AutowireGenericWildcardListBarService();
+
+        assertThrows(FieldInjectionFailedException.class, () -> postProcessor.postProcessBeforeInitialisation(bean, "testBean"));
+    }
+
     private static class FooService {
+    }
+
+    private static class YetAnotherFooService extends FooService {
     }
 
     private static class BarService {
@@ -114,5 +149,20 @@ public class AutowiredAnnotationBeanPostProcessorTest {
         private void setFooService(FooService fooService) {
             throw new IllegalArgumentException();
         }
+    }
+
+    private static class AutowireListBarService {
+        @Autowired
+        private List<FooService> fooServices;
+    }
+
+    private static class AutowireWildcardListBarService {
+        @Autowired
+        private List<? extends FooService> fooServices;
+    }
+
+    private static class AutowireGenericWildcardListBarService {
+        @Autowired
+        private List<?> fooServices;
     }
 }

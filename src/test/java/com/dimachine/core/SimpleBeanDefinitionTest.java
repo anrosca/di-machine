@@ -30,4 +30,44 @@ public class SimpleBeanDefinitionTest {
 
         assertThrows(BeanClassMissingException.class, beanDefinition::getBeanClass);
     }
+
+    @Test
+    public void beanDefinitionsWithTheSameState_shouldBeEqual() {
+        SimpleBeanDefinition firstBeanDefinition = SimpleBeanDefinition.builder()
+                .className(SimpleBeanDefinition.class.getName())
+                .beanName("test")
+                .build();
+        SimpleBeanDefinition secondBeanDefinition = SimpleBeanDefinition.builder()
+                .className(SimpleBeanDefinition.class.getName())
+                .beanName("test")
+                .build();
+
+        assertEquals(secondBeanDefinition, firstBeanDefinition);
+    }
+
+    @Test
+    public void beanDefinitionsWithDifferentBeanNames_shouldNotBeEqual() {
+        SimpleBeanDefinition firstBeanDefinition = SimpleBeanDefinition.builder()
+                .className(SimpleBeanDefinition.class.getName())
+                .beanName("test")
+                .build();
+        SimpleBeanDefinition secondBeanDefinition = SimpleBeanDefinition.builder()
+                .className(SimpleBeanDefinition.class.getName())
+                .beanName("simpleBeanDefinition")
+                .build();
+
+        assertNotEquals(secondBeanDefinition, firstBeanDefinition);
+    }
+
+    @Test
+    public void toStringShouldReturnHumanReadableString() {
+        SimpleBeanDefinition beanDefinition = SimpleBeanDefinition.builder()
+                .className(SimpleBeanDefinition.class.getName())
+                .beanName("simpleBeanDefinition")
+                .build();
+
+        String expectedStringRepresentation = "SimpleBeanDefinition{className='com.dimachine.core.SimpleBeanDefinition', " +
+                "beanName='simpleBeanDefinition', scope=SINGLETON}";
+        assertEquals(expectedStringRepresentation, beanDefinition.toString());
+    }
 }
