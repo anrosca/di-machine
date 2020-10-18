@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFactory, BeanRegistry {
     private final ClasspathScanner classpathScanner;
     private final BeanDefinitionMaker beanDefinitionMaker = new DefaultBeanDefinitionMaker();
+    private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
 
     public DefaultBeanFactory(String... packagesToScan) {
         this.classpathScanner = new ClasspathScanner(packagesToScan);
@@ -88,12 +89,48 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
 
     @Override
     public void refresh() {
-        List<String> scannedClasses = classpathScanner.scan();
+        List<String> scannedClasses = scanClasspath();
         List<BeanDefinition> beanDefinitions = scannedClasses.stream()
                 .map(beanDefinitionMaker::makeBeanDefinition)
                 .collect(Collectors.toList());
         beanDefinitions.forEach(this::registerBeans);
         instantiateSingletonBeans();
+        invokeBeanPostProcessors();
+    }
+
+    protected List<String> scanClasspath() {
+        return classpathScanner.scan();
+    }
+
+    private void invokeBeanPostProcessors() {
+        postProcessBeforeInitialisation();
+        postProcessAfterInitialisation();
+    }
+
+    private void postProcessBeforeInitialisation() {
+        for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
+            for (Map.Entry<BeanDefinition, Object> singletonBean : singletonBeans.entrySet()) {
+                Object bean = singletonBean.getValue();
+                String beanName = singletonBean.getKey().getBeanName();
+                if (!isBeanPostProcessor(bean)) {
+                    Object newBeanInstance = beanPostProcessor.postProcessBeforeInitialisation(bean, beanName);
+                    singletonBean.setValue(newBeanInstance);
+                }
+            }
+        }
+    }
+
+    private void postProcessAfterInitialisation() {
+        for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
+            for (Map.Entry<BeanDefinition, Object> singletonBean : singletonBeans.entrySet()) {
+                Object bean = singletonBean.getValue();
+                String beanName = singletonBean.getKey().getBeanName();
+                if (!isBeanPostProcessor(bean)) {
+                    Object newBeanInstance = beanPostProcessor.postProcessAfterInitialisation(bean, beanName);
+                    singletonBean.setValue(newBeanInstance);
+                }
+            }
+        }
     }
 
     private void instantiateSingletonBeans() {
@@ -103,7 +140,15 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
 
     private void makeSingletonIfNeeded(BeanDefinition beanDefinition) {
         if (beanDefinition.isSingleton() && !contains(beanDefinition.getBeanClass())) {
-            singletonBeans.put(beanDefinition, objectFactory.instantiate(beanDefinition.getBeanClass(), this));
+            Object beanInstance = objectFactory.instantiate(beanDefinition.getBeanClass(), this);
+            if (isBeanPostProcessor(beanInstance)) {
+                beanPostProcessors.add((BeanPostProcessor) beanInstance);
+            }
+            singletonBeans.put(beanDefinition, beanInstance);
         }
+    }
+
+    private boolean isBeanPostProcessor(Object beanInstance) {
+        return beanInstance instanceof BeanPostProcessor;
     }
 }

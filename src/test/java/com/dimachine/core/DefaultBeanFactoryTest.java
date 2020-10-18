@@ -1,17 +1,31 @@
 package com.dimachine.core;
 
-import com.dimachine.core._component.TestComponentWithoutExplicitName;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.lang.reflect.Proxy;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class DefaultBeanFactoryTest {
 
-    private final DefaultBeanFactory beanFactory = new DefaultBeanFactory();
+    private DefaultBeanFactory beanFactory;
     private final SimpleBeanDefinition beanDefinition = SimpleBeanDefinition.builder()
             .className(TargetBean.class.getName())
             .beanName("testBean")
             .build();
+
+    @BeforeEach
+    public void setUp() {
+        beanFactory = new DefaultBeanFactory() {
+            @Override
+            protected List<String> scanClasspath() {
+                return Collections.emptyList();
+            }
+        };
+    }
 
     @Test
     public void shouldBeAbleToGetBeanByName_whenItIsPresentInBeanFactory() {
@@ -48,7 +62,7 @@ public class DefaultBeanFactoryTest {
         beanFactory.registerBeans(beanDefinition);
         beanFactory.refresh();
 
-        assertTrue(beanFactory.contains(TestComponentWithoutExplicitName.class));
+        assertTrue(beanFactory.contains(TargetBean.class));
     }
 
     @Test
@@ -134,10 +148,40 @@ public class DefaultBeanFactoryTest {
         assertThrows(NoSuchBeanDefinitionException.class, () -> beanFactory.getBean("foo", TargetBean.class));
     }
 
+    @Test
+    public void shouldInvokeBeanPostProcessorsAfterSingletonInstantiation() {
+        SimpleBeanDefinition beanDefinition = SimpleBeanDefinition.builder()
+                .className(TargetBean.class.getName())
+                .beanName("testBean")
+                .build();
+        SimpleBeanDefinition beanPostProcessorDefinition = SimpleBeanDefinition.builder()
+                .className(BeanPostProcessorSpy.class.getName())
+                .beanName("beanPostProcessorSpy")
+                .build();
+        beanFactory.registerBeans(beanDefinition, beanPostProcessorDefinition);
+        beanFactory.refresh();
+
+        Comparable<?> bean = beanFactory.getBean(Comparable.class);
+
+        assertNotNull(bean);
+        assertNotEquals(bean.getClass(), TargetBean.class);
+    }
+
     private static class TargetBean implements Comparable<TargetBean> {
+        public TargetBean() {
+        }
+
         @Override
         public int compareTo(TargetBean other) {
             return 0;
+        }
+    }
+
+    private static class BeanPostProcessorSpy implements BeanPostProcessor {
+        @Override
+        public Object postProcessBeforeInitialisation(Object bean, String beanName) {
+            return Proxy.newProxyInstance(getClass().getClassLoader(), bean.getClass().getInterfaces(),
+                    (proxy, method, args) -> method.invoke(bean, args));
         }
     }
 }
