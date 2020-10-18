@@ -3,9 +3,11 @@ package com.dimachine.core;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFactory, BeanRegistry {
     private final ClasspathScanner classpathScanner;
+    private final BeanDefinitionMaker beanDefinitionMaker = new DefaultBeanDefinitionMaker();
 
     public DefaultBeanFactory(String... packagesToScan) {
         this.classpathScanner = new ClasspathScanner(packagesToScan);
@@ -86,7 +88,10 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
 
     @Override
     public void refresh() {
-        List<BeanDefinition> beanDefinitions = classpathScanner.scan();
+        List<String> scannedClasses = classpathScanner.scan();
+        List<BeanDefinition> beanDefinitions = scannedClasses.stream()
+                .map(beanDefinitionMaker::makeBeanDefinition)
+                .collect(Collectors.toList());
         beanDefinitions.forEach(this::registerBeans);
         instantiateSingletonBeans();
     }

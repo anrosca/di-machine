@@ -15,34 +15,22 @@ public class ClasspathScannerTest {
     @Test
     public void shouldFindComponentBeanDefinitionsFromGivenPackage() {
         ClasspathScanner scanner = new ClasspathScanner("com.dimachine.core._component");
-        List<BeanDefinition> foundBeanDefinitions = scanner.scan();
+        List<String> foundBeanClassed = scanner.scan();
 
         assertEquals(List.of(
-                SimpleBeanDefinition.builder()
-                        .className(TestComponentWithExplicitName.class.getName())
-                        .beanName("explicitComponent")
-                        .build(),
-                SimpleBeanDefinition.builder()
-                        .className(TestComponentWithoutExplicitName.class.getName())
-                        .beanName("testComponentWithoutExplicitName")
-                        .build()
-        ), foundBeanDefinitions);
+                TestComponentWithExplicitName.class.getName(),
+                TestComponentWithoutExplicitName.class.getName()
+        ), foundBeanClassed);
     }
 
     @Test
     public void shouldFindServiceBeanDefinitionsFromGivenPackage() {
         ClasspathScanner scanner = new ClasspathScanner("com.dimachine.core._service");
-        List<BeanDefinition> foundBeanDefinitions = scanner.scan();
+        List<String> foundBeanClasses = scanner.scan();
 
         assertEquals(List.of(
-                SimpleBeanDefinition.builder()
-                        .className(TestServiceWithExplicitName.class.getName())
-                        .beanName("explicitService")
-                        .build(),
-                SimpleBeanDefinition.builder()
-                        .className(TestServiceWithoutExplicitName.class.getName())
-                        .beanName("testServiceWithoutExplicitName")
-                        .build()
-        ), foundBeanDefinitions);
+                TestServiceWithExplicitName.class.getName(),
+                TestServiceWithoutExplicitName.class.getName()
+        ), foundBeanClasses);
     }
 }

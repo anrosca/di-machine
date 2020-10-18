@@ -2,7 +2,6 @@ package com.dimachine.core;
 
 import com.dimachine.core.annotation.Component;
 import com.dimachine.core.annotation.Service;
-import io.github.classgraph.AnnotationInfo;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
@@ -12,40 +11,22 @@ import java.util.List;
 
 public class ClasspathScanner {
     private final String[] packagesToScan;
-    private final BeanNamer beanNamer = new DefaultBeanNamer();
     private final List<Class<?>> targetAnnotations = List.of(Component.class, Service.class);
-    private final ScopeResolver scopeResolver = new ScopeResolver();
 
     public ClasspathScanner(String... packagesToScan) {
         this.packagesToScan = packagesToScan;
     }
 
-    public List<BeanDefinition> scan() {
-        List<BeanDefinition> foundBeanDefinitions = new ArrayList<>();
+    public List<String> scan() {
+        List<String> foundBeanDefinitions = new ArrayList<>();
         try (ScanResult scanResult = new ClassGraph().enableAllInfo().acceptPackages(packagesToScan).scan()) {
             for (Class<?> scannedAnnotation : targetAnnotations) {
                 String routeAnnotation = scannedAnnotation.getName();
-                for (ClassInfo routeClassInfo : scanResult.getClassesWithAnnotation(routeAnnotation)) {
-                    BeanDefinition beanDefinition = makeBeanDefinition(routeAnnotation, routeClassInfo);
-                    foundBeanDefinitions.add(beanDefinition);
+                for (ClassInfo classInfo : scanResult.getClassesWithAnnotation(routeAnnotation)) {
+                    foundBeanDefinitions.add(classInfo.getName());
                 }
             }
         }
         return foundBeanDefinitions;
-    }
-
-    private BeanDefinition makeBeanDefinition(String routeAnnotation, ClassInfo routeClassInfo) {
-        AnnotationInfo routeAnnotationInfo = routeClassInfo.getAnnotationInfo(routeAnnotation);
-        String explicitBeanName = (String) routeAnnotationInfo.getParameterValues().getValue("value");
-        String className = routeClassInfo.getName();
-        return SimpleBeanDefinition.builder()
-                .className(className)
-                .beanName(makeBeanName(className, explicitBeanName))
-                .scope(scopeResolver.resolveScope(className))
-                .build();
-    }
-
-    private String makeBeanName(String className, String explicitBeanName) {
-        return explicitBeanName.isEmpty() ? beanNamer.makeBeanName(className) : explicitBeanName;
     }
 }
