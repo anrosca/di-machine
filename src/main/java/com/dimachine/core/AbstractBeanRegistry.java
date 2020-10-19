@@ -9,7 +9,12 @@ public abstract class AbstractBeanRegistry implements BeanRegistry {
     protected final DefaultObjectFactory objectFactory = new DefaultObjectFactory();
 
     @Override
-    public void registerBeans(BeanDefinition...beanDefinitions) {
-        this.beanDefinitions.addAll(Arrays.asList(beanDefinitions));
+    public void registerBeans(BeanDefinition... beanDefinitions) {
+        registerBeans(Arrays.asList(beanDefinitions));
+    }
+
+    @Override
+    public void registerBeans(List<BeanDefinition> beanDefinitions) {
+        this.beanDefinitions.addAll(beanDefinitions);
     }
 }

@@ -21,7 +21,7 @@ public class DefaultBeanFactoryTest {
 
     @BeforeEach
     public void setUp() {
-        beanFactory = new DefaultBeanFactory() {
+        beanFactory = new DefaultBeanFactory(new String[] {}) {
             @Override
             protected List<String> scanClasspath() {
                 return Collections.emptyList();

@@ -4,11 +4,13 @@ public class SimpleBeanDefinition implements BeanDefinition {
     private final String className;
     private final String beanName;
     private final BeanScope scope;
+    private final Class<?> beanAssignableClass;
 
     private SimpleBeanDefinition(SimpleBeanDefinitionBuilder builder) {
         this.className = builder.className;
         this.beanName = builder.beanName;
         this.scope = builder.scope;
+        this.beanAssignableClass = builder.beanAssignableClass;
     }
 
     @Override
@@ -37,7 +39,7 @@ public class SimpleBeanDefinition implements BeanDefinition {
     }
 
     @Override
-    public Class<?> getBeanClass() {
+    public Class<?> getRealBeanClass() {
         try {
             return Class.forName(className);
         } catch (ClassNotFoundException e) {
@@ -47,20 +49,25 @@ public class SimpleBeanDefinition implements BeanDefinition {
     }
 
     @Override
+    public Class<?> getBeanAssignableClass() {
+        return beanAssignableClass != null ? beanAssignableClass : getRealBeanClass();
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
         SimpleBeanDefinition that = (SimpleBeanDefinition) o;
 
-        if (!className.equals(that.className)) return false;
+        if (className != null ? !className.equals(that.className) : that.className != null) return false;
         if (!beanName.equals(that.beanName)) return false;
         return scope == that.scope;
     }
 
     @Override
     public int hashCode() {
-        int result = className.hashCode();
+        int result = className != null ? className.hashCode() : 0;
         result = 31 * result + beanName.hashCode();
         result = 31 * result + scope.hashCode();
         return result;
@@ -83,6 +90,7 @@ public class SimpleBeanDefinition implements BeanDefinition {
         private String className;
         private String beanName;
         private BeanScope scope = BeanScope.SINGLETON;
+        private Class<?> beanAssignableClass;
 
         public SimpleBeanDefinitionBuilder className(String className) {
             this.className = className;
@@ -96,6 +104,11 @@ public class SimpleBeanDefinition implements BeanDefinition {
 
         public SimpleBeanDefinitionBuilder scope(BeanScope scope) {
             this.scope = scope;
+            return this;
+        }
+
+        public SimpleBeanDefinitionBuilder beanAssignableClass(Class<?> beanAssignableClass) {
+            this.beanAssignableClass = beanAssignableClass;
             return this;
         }
 

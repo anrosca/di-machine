@@ -11,5 +11,7 @@ public interface BeanDefinition {
 
     boolean isPrototype();
 
-    Class<?> getBeanClass();
+    Class<?> getRealBeanClass();
+
+    Class<?> getBeanAssignableClass();
 }

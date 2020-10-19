@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class DefaultObjectFactoryTest {
 
     private final DefaultObjectFactory objectFactory = new DefaultObjectFactory();
-    private final DefaultBeanFactory defaultBeanFactory = new DefaultBeanFactory();
+    private final DefaultBeanFactory defaultBeanFactory = new DefaultBeanFactory(new String[] {});
 
     @Test
     public void shouldBeAbleToMakeSingletonBean_withDefaultConstructor() {

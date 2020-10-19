@@ -1,4 +1,4 @@
-package com.dimachine.core.test;
+package test;
 
 import com.dimachine.core.annotation.Component;
 import com.dimachine.core.annotation.PostConstruct;

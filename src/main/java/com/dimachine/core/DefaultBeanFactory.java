@@ -1,7 +1,10 @@
 package com.dimachine.core;
 
-import com.dimachine.core.annotation.Ordered;
+import com.dimachine.core.annotation.*;
+import com.dimachine.core.scanner.AnnotationBeanDefinitionScanner;
+import com.dimachine.core.util.ReflectionUtils;
 
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -9,10 +12,28 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     private final ClasspathScanner classpathScanner;
     private final BeanDefinitionMaker beanDefinitionMaker = new DefaultBeanDefinitionMaker();
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
+    private final ProxyFactory proxyFactory = new DefaultProxyFactory();
+    private final AnnotationBeanDefinitionScanner beanDefinitionScanner = new AnnotationBeanDefinitionScanner();
+    private final BeanNamer beanNamer = new DefaultBeanNamer();
 
     public DefaultBeanFactory(String... packagesToScan) {
         String currentPackage = getCurrentPackage();
-        this.classpathScanner = new ClasspathScanner(makePackagesToScan(currentPackage, packagesToScan));
+        List<Class<?>> targetAnnotations = List.of(Component.class, Service.class, Configuration.class);
+        this.classpathScanner = new ClasspathScanner(targetAnnotations, makePackagesToScan(currentPackage, packagesToScan));
+    }
+
+    public DefaultBeanFactory(Class<?>... configurationClasses) {
+        String currentPackage = getCurrentPackage();
+        List<Class<?>> targetAnnotations = List.of(Component.class, Service.class, Configuration.class);
+        this.classpathScanner = new ClasspathScanner(targetAnnotations, makePackagesToScan(currentPackage, new String[]{}));
+        registerConfigurationClasses(configurationClasses);
+    }
+
+    private void registerConfigurationClasses(Class<?>[] configurationClasses) {
+        BeanDefinition[] beanDefinitions = Arrays.stream(configurationClasses)
+                .map(configClass -> beanDefinitionMaker.makeBeanDefinition(configClass.getName()))
+                .toArray(BeanDefinition[]::new);
+        registerBeans(beanDefinitions);
     }
 
     protected String[] makePackagesToScan(String currentPackage, String[] packagesToScan) {
@@ -41,7 +62,7 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
         return singletonBeans.entrySet()
                 .stream()
                 .filter(beanEntry -> beanEntry.getKey().getBeanName().equals(name))
-                .filter(beanEntry -> clazz.isAssignableFrom(beanEntry.getKey().getBeanClass()))
+                .filter(beanEntry -> clazz.isAssignableFrom(beanEntry.getKey().getRealBeanClass()))
                 .map(Map.Entry::getValue)
                 .findFirst()
                 .map(clazz::cast)
@@ -56,7 +77,7 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
         }
         return singletonBeans.entrySet()
                 .stream()
-                .filter(entry -> clazz.isAssignableFrom(entry.getKey().getBeanClass()))
+                .filter(entry -> clazz.isAssignableFrom(entry.getValue().getClass()))
                 .findFirst()
                 .map(Map.Entry::getValue)
                 .map(clazz::cast)
@@ -74,19 +95,19 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     public <T> boolean contains(Class<T> clazz) {
         return singletonBeans.entrySet()
                 .stream()
-                .anyMatch(beanEntry -> clazz.isAssignableFrom(beanEntry.getKey().getBeanClass()));
+                .anyMatch(beanEntry -> clazz.isAssignableFrom(beanEntry.getValue().getClass()));
     }
 
     @Override
     public <T> boolean containsBeanDefinitionOfType(Class<T> clazz) {
         return beanDefinitions.stream()
-                .anyMatch(beanDefinition -> clazz.isAssignableFrom(beanDefinition.getBeanClass()));
+                .anyMatch(beanDefinition -> clazz.isAssignableFrom(beanDefinition.getRealBeanClass()));
     }
 
     @Override
     public BeanDefinition getBeanDefinition(Class<?> beanClass) {
         return beanDefinitions.stream()
-                .filter(beanDefinition -> beanClass.isAssignableFrom(beanDefinition.getBeanClass()))
+                .filter(beanDefinition -> beanClass.isAssignableFrom(beanDefinition.getBeanAssignableClass()))
                 .findFirst()
                 .orElseThrow(() -> new NoSuchBeanDefinitionException("No bean definition of type " + beanClass + " found"));
     }
@@ -103,7 +124,7 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     public <T> List<T> getAllBeansOfType(Class<T> clazz) {
         return singletonBeans.entrySet()
                 .stream()
-                .filter(beanEntry -> clazz.isAssignableFrom(beanEntry.getKey().getBeanClass()))
+                .filter(beanEntry -> clazz.isAssignableFrom(beanEntry.getKey().getRealBeanClass()))
                 .map(Map.Entry::getValue)
                 .map(clazz::cast)
                 .collect(Collectors.toList());
@@ -111,11 +132,10 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
 
     @Override
     public void refresh() {
-        List<String> scannedClasses = scanClasspath();
-        List<BeanDefinition> beanDefinitions = scannedClasses.stream()
+        BeanDefinition[] beanDefinitions = scanClasspath().stream()
                 .map(beanDefinitionMaker::makeBeanDefinition)
-                .collect(Collectors.toList());
-        beanDefinitions.forEach(this::registerBeans);
+                .toArray(BeanDefinition[]::new);
+        registerBeans(beanDefinitions);
         registerBeanFactory();
         instantiateSingletonBeans();
         invokeBeanPostProcessors();
@@ -141,21 +161,23 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     }
 
     private void orderBeanPostProcessors() {
-        beanPostProcessors.sort(new Comparator<>() {
-            @Override
-            public int compare(BeanPostProcessor first, BeanPostProcessor second) {
-                return Integer.compare(getOrder(first), getOrder(second));
-            }
+        beanPostProcessors.sort(new BeanPostProcessorOrderedComparator());
+    }
 
-            private int getOrder(BeanPostProcessor processor) {
-                Class<?> processorClass = processor.getClass();
-                if (processorClass.isAnnotationPresent(Ordered.class)) {
-                    Ordered ordered = processorClass.getAnnotation(Ordered.class);
-                    return ordered.value().getPrecedence();
-                }
-                return Order.DEFAULT_PRECEDENCE.getPrecedence();
+    private static class BeanPostProcessorOrderedComparator implements Comparator<BeanPostProcessor> {
+        @Override
+        public int compare(BeanPostProcessor first, BeanPostProcessor second) {
+            return Integer.compare(getOrder(first), getOrder(second));
+        }
+
+        private int getOrder(BeanPostProcessor processor) {
+            Class<?> processorClass = processor.getClass();
+            if (processorClass.isAnnotationPresent(Ordered.class)) {
+                Ordered ordered = processorClass.getAnnotation(Ordered.class);
+                return ordered.value().getPrecedence();
             }
-        });
+            return Order.DEFAULT_PRECEDENCE.getPrecedence();
+        }
     }
 
     private void postProcessBeforeInitialisation() {
@@ -191,12 +213,32 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
 
     private void makeSingletonIfNeeded(BeanDefinition beanDefinition) {
         if (beanDefinition.isSingleton() && !singletonBeans.containsKey(beanDefinition)) {
-            Object beanInstance = objectFactory.instantiate(beanDefinition.getBeanClass(), this);
+            Object beanInstance = objectFactory.instantiate(beanDefinition.getRealBeanClass(), this);
+            if (isConfigurationBean(beanDefinition.getRealBeanClass())) {
+                Class<?> originalConfigClass = beanDefinition.getRealBeanClass();
+                beanInstance = proxyFactory.proxyConfigurationClass(beanInstance, beanDefinition, this);
+                instantiateSingletonsFromConfigClass(beanInstance, originalConfigClass);
+            }
             if (isBeanPostProcessor(beanInstance)) {
                 beanPostProcessors.add((BeanPostProcessor) beanInstance);
             }
             singletonBeans.put(beanDefinition, beanInstance);
         }
+    }
+
+    private void instantiateSingletonsFromConfigClass(Object configBeanInstance, Class<?> originalConfigClass) {
+        for (Method method : originalConfigClass.getMethods()) {
+            if (method.isAnnotationPresent(Bean.class)) {
+                BeanDefinition beanDefinition = beanDefinitionScanner.makeBeanDefinition(method);
+                registerBeans(beanDefinition);
+                Object newBeanInstance = ReflectionUtils.invokeMethod(configBeanInstance, method);
+                singletonBeans.put(beanDefinition, newBeanInstance);
+            }
+        }
+    }
+
+    private boolean isConfigurationBean(Class<?> beanClass) {
+        return beanClass.isAnnotationPresent(Configuration.class);
     }
 
     private boolean isBeanPostProcessor(Object beanInstance) {

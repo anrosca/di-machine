@@ -1,4 +1,4 @@
-package com.dimachine.core.test;
+package test;
 
 import com.dimachine.core.annotation.Service;
 

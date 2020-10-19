@@ -13,7 +13,7 @@ public class SimpleBeanDefinitionTest {
                 .beanName("test")
                 .build();
 
-        assertEquals(SimpleBeanDefinition.class, beanDefinition.getBeanClass());
+        assertEquals(SimpleBeanDefinition.class, beanDefinition.getRealBeanClass());
         assertEquals(SimpleBeanDefinition.class.getName(), beanDefinition.getClassName());
         assertEquals(BeanScope.SINGLETON, beanDefinition.getBeanScope());
         assertEquals("test", beanDefinition.getBeanName());
@@ -28,7 +28,7 @@ public class SimpleBeanDefinitionTest {
                 .beanName("test")
                 .build();
 
-        assertThrows(BeanClassMissingException.class, beanDefinition::getBeanClass);
+        assertThrows(BeanClassMissingException.class, beanDefinition::getRealBeanClass);
     }
 
     @Test

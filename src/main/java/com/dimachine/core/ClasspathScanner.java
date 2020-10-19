@@ -1,7 +1,5 @@
 package com.dimachine.core;
 
-import com.dimachine.core.annotation.Component;
-import com.dimachine.core.annotation.Service;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
@@ -11,9 +9,10 @@ import java.util.List;
 
 public class ClasspathScanner {
     private final String[] packagesToScan;
-    private final List<Class<?>> targetAnnotations = List.of(Component.class, Service.class);
+    private final List<Class<?>> targetAnnotations;
 
-    public ClasspathScanner(String... packagesToScan) {
+    public ClasspathScanner(List<Class<?>> targetAnnotations, String... packagesToScan) {
+        this.targetAnnotations = targetAnnotations;
         this.packagesToScan = packagesToScan;
     }
 
