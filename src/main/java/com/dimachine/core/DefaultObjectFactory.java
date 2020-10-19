@@ -56,17 +56,21 @@ public class DefaultObjectFactory implements ObjectFactory {
         for (Constructor<?> constructor : declaredConstructors) {
             Class<?>[] parameterTypes = constructor.getParameterTypes();
             if (!isDefaultConstructor(constructor)) {
-                boolean canSatisfyParameters = true;
-                for (Class<?> parameterType : parameterTypes) {
-                    canSatisfyParameters &= beanFactory.containsBeanDefinitionOfType(parameterType);
-                }
-                if (canSatisfyParameters) {
+                if (canSatisfyParameters(beanFactory, parameterTypes)) {
                     checkForCycles(constructor, beanClass);
                     return constructor;
                 }
             }
         }
-        return detDefaultConstructor(declaredConstructors);
+        return getDefaultConstructor(declaredConstructors);
+    }
+
+    private boolean canSatisfyParameters(BeanFactory beanFactory, Class<?>[] parameterTypes) {
+        boolean canSatisfyParameters = true;
+        for (Class<?> parameterType : parameterTypes) {
+            canSatisfyParameters &= beanFactory.containsBeanDefinitionOfType(parameterType);
+        }
+        return canSatisfyParameters;
     }
 
     private void checkForCycles(Constructor<?> constructor, Class<?> beanClass) {
@@ -87,7 +91,7 @@ public class DefaultObjectFactory implements ObjectFactory {
         return constructor.getParameterTypes().length == 0;
     }
 
-    private Constructor<?> detDefaultConstructor(Constructor<?>[] declaredConstructors) {
+    private Constructor<?> getDefaultConstructor(Constructor<?>[] declaredConstructors) {
         for (Constructor<?> constructor : declaredConstructors) {
             Class<?>[] parameterTypes = constructor.getParameterTypes();
             if (parameterTypes.length == 0) {
