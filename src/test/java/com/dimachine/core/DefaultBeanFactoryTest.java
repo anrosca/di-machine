@@ -1,10 +1,8 @@
 package com.dimachine.core;
 
-import com.dimachine.core.postprocessor.PostConstructAnnotationBeanPostProcessor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Proxy;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -22,7 +20,7 @@ public class DefaultBeanFactoryTest {
 
     @BeforeEach
     public void setUp() {
-        beanFactory = new DefaultBeanFactory(new String[] {}) {
+        beanFactory = new DefaultBeanFactory(new String[]{}) {
             @Override
             protected List<String> scanClasspath() {
                 return Collections.emptyList();
@@ -172,20 +170,6 @@ public class DefaultBeanFactoryTest {
     }
 
     @Test
-    public void test() {
-        SimpleBeanDefinition beanDefinition = SimpleBeanDefinition.builder()
-                .className(PostConstructAnnotationBeanPostProcessor.class.getName())
-                .beanName("postConstruct")
-                .build();
-        SimpleBeanDefinition beanPostProcessorDefinition = SimpleBeanDefinition.builder()
-                .className(BeanPostProcessorSpy.class.getName())
-                .beanName("beanPostProcessorSpy")
-                .build();
-        beanFactory.registerBeans(beanDefinition, beanPostProcessorDefinition);
-        beanFactory.refresh();
-    }
-
-    @Test
     public void shouldBeAbleToGetAllSingletonsOfGivenType() {
         SimpleBeanDefinition secondBeanDefinition = SimpleBeanDefinition.builder()
                 .className(TargetBean.class.getName())
@@ -209,13 +193,6 @@ public class DefaultBeanFactoryTest {
         }
     }
 
-    private static class YetAnotherTargetBean extends TargetBean {}
-
-    private static class BeanPostProcessorSpy implements BeanPostProcessor {
-        @Override
-        public Object postProcessBeforeInitialisation(Object bean, String beanName) {
-            return Proxy.newProxyInstance(getClass().getClassLoader(), bean.getClass().getInterfaces(),
-                    (proxy, method, args) -> method.invoke(bean, args));
-        }
+    private static class YetAnotherTargetBean extends TargetBean {
     }
 }

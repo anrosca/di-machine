@@ -1,4 +1,4 @@
-package com.dimachine.core._service;
+package _service;
 
 import com.dimachine.core.annotation.Service;
 

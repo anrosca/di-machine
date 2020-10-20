@@ -1,4 +1,4 @@
-package com.dimachine.core._component;
+package _component;
 
 import com.dimachine.core.annotation.Component;
 

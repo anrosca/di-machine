@@ -1,9 +1,9 @@
 package com.dimachine.core;
 
-import com.dimachine.core._component.TestComponentWithExplicitName;
-import com.dimachine.core._component.TestComponentWithoutExplicitName;
-import com.dimachine.core._service.TestServiceWithExplicitName;
-import com.dimachine.core._service.TestServiceWithoutExplicitName;
+import _component.TestComponentWithExplicitName;
+import _component.TestComponentWithoutExplicitName;
+import _service.TestServiceWithExplicitName;
+import _service.TestServiceWithoutExplicitName;
 import com.dimachine.core.annotation.Component;
 import com.dimachine.core.annotation.Service;
 import org.junit.jupiter.api.Test;
@@ -17,7 +17,7 @@ public class ClasspathScannerTest {
 
     @Test
     public void shouldFindComponentBeanDefinitionsFromGivenPackage() {
-        ClasspathScanner scanner = new ClasspathScanner(targetAnnotations, "com.dimachine.core._component");
+        ClasspathScanner scanner = new ClasspathScanner(targetAnnotations, "_component");
         List<String> foundBeanClassed = scanner.scan();
 
         assertEquals(List.of(
@@ -28,7 +28,7 @@ public class ClasspathScannerTest {
 
     @Test
     public void shouldFindServiceBeanDefinitionsFromGivenPackage() {
-        ClasspathScanner scanner = new ClasspathScanner(targetAnnotations, "com.dimachine.core._service");
+        ClasspathScanner scanner = new ClasspathScanner(targetAnnotations, "_service");
         List<String> foundBeanClasses = scanner.scan();
 
         assertEquals(List.of(
