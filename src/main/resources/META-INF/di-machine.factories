@@ -1,0 +1,2 @@
+com.dimachine.core.BeanPostProcessor=com.dimachine.core.postprocessor.PostConstructAnnotationBeanPostProcessor,\
+com.dimachine.core.postprocessor.AutowiredAnnotationBeanPostProcessor

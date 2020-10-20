@@ -16,15 +16,13 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     private final AnnotationConfigObjectFactory configObjectFactory = new AnnotationConfigObjectFactory(this);
 
     public DefaultBeanFactory(String... packagesToScan) {
-        String currentPackage = getCurrentPackage();
         List<Class<?>> targetAnnotations = List.of(Component.class, Service.class, Configuration.class);
-        this.classpathScanner = new ClasspathScanner(targetAnnotations, makePackagesToScan(currentPackage, packagesToScan));
+        this.classpathScanner = new ClasspathScanner(targetAnnotations, packagesToScan);
     }
 
     public DefaultBeanFactory(Class<?>... configurationClasses) {
-        String currentPackage = getCurrentPackage();
         List<Class<?>> targetAnnotations = List.of(Component.class, Service.class, Configuration.class);
-        this.classpathScanner = new ClasspathScanner(targetAnnotations, makePackagesToScan(currentPackage, new String[]{}));
+        this.classpathScanner = new ClasspathScanner(targetAnnotations);
         registerConfigurationClasses(configurationClasses);
     }
 
@@ -33,17 +31,6 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
                 .map(configClass -> beanDefinitionMaker.makeBeanDefinition(configClass.getName()))
                 .toArray(BeanDefinition[]::new);
         registerBeans(beanDefinitions);
-    }
-
-    protected String[] makePackagesToScan(String currentPackage, String[] packagesToScan) {
-        List<String> resultingPackages = new ArrayList<>();
-        resultingPackages.add(currentPackage);
-        resultingPackages.addAll(Arrays.asList(packagesToScan));
-        return resultingPackages.toArray(new String[0]);
-    }
-
-    private String getCurrentPackage() {
-        return getClass().getPackageName();
     }
 
     @Override
@@ -148,6 +135,7 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
 
     @Override
     public void refresh() {
+        loadFactories();
         BeanDefinition[] beanDefinitions = scanClasspath().stream()
                 .map(beanDefinitionMaker::makeBeanDefinition)
                 .toArray(BeanDefinition[]::new);
@@ -155,6 +143,11 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
         registerBeanFactory();
         instantiateSingletonBeans();
         invokeBeanPostProcessors();
+    }
+
+    protected void loadFactories() {
+        DiMachineFactoriesLoader factoriesLoader = new DiMachineFactoriesLoader();
+        factoriesLoader.load().forEach(this::registerBeans);
     }
 
     private void registerBeanFactory() {
