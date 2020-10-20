@@ -14,7 +14,6 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
     private final ProxyFactory proxyFactory = new DefaultProxyFactory();
     private final AnnotationBeanDefinitionScanner beanDefinitionScanner = new AnnotationBeanDefinitionScanner();
-    private final BeanNamer beanNamer = new DefaultBeanNamer();
 
     public DefaultBeanFactory(String... packagesToScan) {
         String currentPackage = getCurrentPackage();
@@ -216,7 +215,9 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
             Object beanInstance = objectFactory.instantiate(beanDefinition.getRealBeanClass(), this);
             if (isConfigurationBean(beanDefinition.getRealBeanClass())) {
                 Class<?> originalConfigClass = beanDefinition.getRealBeanClass();
-                beanInstance = proxyFactory.proxyConfigurationClass(beanInstance, beanDefinition, this);
+                if (shouldProxyConfigClass(originalConfigClass)) {
+                    beanInstance = proxyFactory.proxyConfigurationClass(beanInstance, beanDefinition, this);
+                }
                 instantiateSingletonsFromConfigClass(beanInstance, originalConfigClass);
             }
             if (isBeanPostProcessor(beanInstance)) {
@@ -224,6 +225,11 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
             }
             singletonBeans.put(beanDefinition, beanInstance);
         }
+    }
+
+    private boolean shouldProxyConfigClass(Class<?> originalConfigClass) {
+        Configuration configuration = originalConfigClass.getAnnotation(Configuration.class);
+        return configuration.proxyBeanMethods();
     }
 
     private void instantiateSingletonsFromConfigClass(Object configBeanInstance, Class<?> originalConfigClass) {
