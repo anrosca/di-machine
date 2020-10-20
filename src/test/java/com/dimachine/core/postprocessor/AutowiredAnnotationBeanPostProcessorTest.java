@@ -7,7 +7,9 @@ import com.dimachine.core.annotation.Autowired;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -80,6 +82,17 @@ public class AutowiredAnnotationBeanPostProcessorTest {
         List<FooService> expectedDependencies = List.of(new FooService(), new YetAnotherFooService());
         when(beanFactory.getAllBeansOfType(FooService.class)).thenReturn(expectedDependencies);
         AutowireListBarService bean = new AutowireListBarService();
+
+        postProcessor.postProcessBeforeInitialisation(bean, "testBean");
+
+        assertEquals(expectedDependencies, bean.fooServices);
+    }
+
+    @Test
+    public void whenAutowiringSetType_shouldInjectAllBeansOfThatType() {
+        Set<FooService> expectedDependencies = Set.of(new FooService(), new YetAnotherFooService());
+        when(beanFactory.getAllBeansOfType(FooService.class)).thenReturn(new ArrayList<>(expectedDependencies));
+        AutowireSetBarService bean = new AutowireSetBarService();
 
         postProcessor.postProcessBeforeInitialisation(bean, "testBean");
 
@@ -164,5 +177,10 @@ public class AutowiredAnnotationBeanPostProcessorTest {
     private static class AutowireGenericWildcardListBarService {
         @Autowired
         private List<?> fooServices;
+    }
+
+    private static class AutowireSetBarService {
+        @Autowired
+        private Set<FooService> fooServices;
     }
 }

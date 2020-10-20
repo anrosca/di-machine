@@ -4,9 +4,12 @@ import com.dimachine.core.*;
 import com.dimachine.core.annotation.Autowired;
 import com.dimachine.core.annotation.Component;
 import com.dimachine.core.annotation.Ordered;
+import com.dimachine.core.util.CollectionFactory;
 
 import java.lang.reflect.*;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 @Component
 @Ordered(Order.HIGHEST_PRECEDENCE)
@@ -104,7 +107,7 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
         }
     }
 
-    private List<?> doResolveCollectionFieldValue(Field field) throws ClassNotFoundException {
+    private Object doResolveCollectionFieldValue(Field field) throws ClassNotFoundException {
         ParameterizedType genericType = (ParameterizedType) field.getGenericType();
         Type[] actualTypeArguments = genericType.getActualTypeArguments();
         String dependencyTypeName = actualTypeArguments[0].getTypeName();
@@ -112,7 +115,13 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
             dependencyTypeName = normalizeWildcardTypeName(dependencyTypeName, field);
         }
         Class<?> dependencyClass = Class.forName(dependencyTypeName);
-        return beanFactory.getAllBeansOfType(dependencyClass);
+        return convertCollectionToType(dependencyClass, field.getType());
+    }
+
+    private Collection<?> convertCollectionToType(Class<?> dependencyClass, Class<?> collectionType) {
+        Collection<Object> collection = CollectionFactory.newCollectionOfType(collectionType);
+        collection.addAll(beanFactory.getAllBeansOfType(dependencyClass));
+        return collection;
     }
 
     private String normalizeWildcardTypeName(String dependencyTypeName, Field field) {
@@ -128,6 +137,6 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
     }
 
     private boolean isCollection(Field field) {
-        return List.class.isAssignableFrom(field.getType());
+        return List.class.isAssignableFrom(field.getType()) || Set.class.isAssignableFrom(field.getType());
     }
 }
