@@ -3,6 +3,8 @@ package test;
 import com.dimachine.core.annotation.Component;
 import com.dimachine.core.annotation.PostConstruct;
 
+import java.util.Objects;
+
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Component("funky")
@@ -11,7 +13,7 @@ public class TestBean {
     private boolean initMethodWasCalled;
 
     public TestBean(FooService fooService) {
-        this.fooService = fooService;
+        this.fooService = Objects.requireNonNull(fooService);
     }
 
     @PostConstruct

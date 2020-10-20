@@ -25,14 +25,14 @@ public class AnnotationConfigIT {
     public static class AppConfiguration {
 
         @Bean
-        public FooService fooService() {
-            System.out.println("yay");
-            return new FooService();
+        public TestBean testBean(FooService fooService) {
+            return new TestBean(fooService);
         }
 
         @Bean
-        public TestBean testBean() {
-            return new TestBean(fooService());
+        public FooService fooService() {
+            System.out.println("yay");
+            return new FooService();
         }
     }
 }

@@ -5,12 +5,14 @@ public class SimpleBeanDefinition implements BeanDefinition {
     private final String beanName;
     private final BeanScope scope;
     private final Class<?> beanAssignableClass;
+    private ObjectProvider objectProvider;
 
     private SimpleBeanDefinition(SimpleBeanDefinitionBuilder builder) {
         this.className = builder.className;
         this.beanName = builder.beanName;
         this.scope = builder.scope;
         this.beanAssignableClass = builder.beanAssignableClass;
+        this.objectProvider = builder.objectProvider;
     }
 
     @Override
@@ -54,6 +56,16 @@ public class SimpleBeanDefinition implements BeanDefinition {
     }
 
     @Override
+    public ObjectProvider getObjectProvider() {
+        return objectProvider;
+    }
+
+    @Override
+    public void setObjectProvider(ObjectProvider objectProvider) {
+        this.objectProvider = objectProvider;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -91,6 +103,7 @@ public class SimpleBeanDefinition implements BeanDefinition {
         private String beanName;
         private BeanScope scope = BeanScope.SINGLETON;
         private Class<?> beanAssignableClass;
+        public ObjectProvider objectProvider;
 
         public SimpleBeanDefinitionBuilder className(String className) {
             this.className = className;
@@ -109,6 +122,11 @@ public class SimpleBeanDefinition implements BeanDefinition {
 
         public SimpleBeanDefinitionBuilder beanAssignableClass(Class<?> beanAssignableClass) {
             this.beanAssignableClass = beanAssignableClass;
+            return this;
+        }
+
+        public SimpleBeanDefinitionBuilder objectProvider(ObjectProvider objectProvider) {
+            this.objectProvider = objectProvider;
             return this;
         }
 

@@ -14,4 +14,8 @@ public interface BeanDefinition {
     Class<?> getRealBeanClass();
 
     Class<?> getBeanAssignableClass();
+
+    ObjectProvider getObjectProvider();
+
+    void setObjectProvider(ObjectProvider objectProvider);
 }

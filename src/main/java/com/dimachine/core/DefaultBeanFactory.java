@@ -1,10 +1,10 @@
 package com.dimachine.core;
 
-import com.dimachine.core.annotation.*;
-import com.dimachine.core.scanner.AnnotationBeanDefinitionScanner;
-import com.dimachine.core.util.ReflectionUtils;
+import com.dimachine.core.annotation.Component;
+import com.dimachine.core.annotation.Configuration;
+import com.dimachine.core.annotation.Ordered;
+import com.dimachine.core.annotation.Service;
 
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -13,7 +13,7 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     private final BeanDefinitionMaker beanDefinitionMaker = new DefaultBeanDefinitionMaker();
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
     private final ProxyFactory proxyFactory = new DefaultProxyFactory();
-    private final AnnotationBeanDefinitionScanner beanDefinitionScanner = new AnnotationBeanDefinitionScanner();
+    private final AnnotationConfigObjectFactory configObjectFactory = new AnnotationConfigObjectFactory(this);
 
     public DefaultBeanFactory(String... packagesToScan) {
         String currentPackage = getCurrentPackage();
@@ -72,7 +72,7 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     public <T> T getBean(Class<T> clazz) {
         BeanDefinition foundBeanDefinition = getBeanDefinition(clazz);
         if (foundBeanDefinition.isPrototype()) {
-            return objectFactory.instantiate(clazz, this);
+            return instantiatePrototype(clazz, foundBeanDefinition);
         }
         return singletonBeans.entrySet()
                 .stream()
@@ -81,6 +81,15 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
                 .map(Map.Entry::getValue)
                 .map(clazz::cast)
                 .orElseThrow(() -> new NoSuchBeanDefinitionException("No bean with of type " + clazz + " found"));
+    }
+
+    @SuppressWarnings("unchecked")
+    protected <T> T instantiatePrototype(Class<T> clazz, BeanDefinition beanDefinition) {
+        if (beanDefinition.getClassName() == null) {
+            ObjectProvider objectProvider = beanDefinition.getObjectProvider();
+            return (T) objectProvider.makeObject(this);
+        }
+        return objectFactory.instantiate(clazz, this);
     }
 
     @Override
@@ -100,7 +109,7 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     @Override
     public <T> boolean containsBeanDefinitionOfType(Class<T> clazz) {
         return beanDefinitions.stream()
-                .anyMatch(beanDefinition -> clazz.isAssignableFrom(beanDefinition.getRealBeanClass()));
+                .anyMatch(beanDefinition -> clazz.isAssignableFrom(beanDefinition.getBeanAssignableClass()));
     }
 
     @Override
@@ -218,7 +227,7 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
                 if (shouldProxyConfigClass(originalConfigClass)) {
                     beanInstance = proxyFactory.proxyConfigurationClass(beanInstance, beanDefinition, this);
                 }
-                instantiateSingletonsFromConfigClass(beanInstance, originalConfigClass);
+                configObjectFactory.instantiateSingletonsFromConfigClass(beanInstance, originalConfigClass);
             }
             if (isBeanPostProcessor(beanInstance)) {
                 beanPostProcessors.add((BeanPostProcessor) beanInstance);
@@ -230,17 +239,6 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     private boolean shouldProxyConfigClass(Class<?> originalConfigClass) {
         Configuration configuration = originalConfigClass.getAnnotation(Configuration.class);
         return configuration.proxyBeanMethods();
-    }
-
-    private void instantiateSingletonsFromConfigClass(Object configBeanInstance, Class<?> originalConfigClass) {
-        for (Method method : originalConfigClass.getMethods()) {
-            if (method.isAnnotationPresent(Bean.class)) {
-                BeanDefinition beanDefinition = beanDefinitionScanner.makeBeanDefinition(method);
-                registerBeans(beanDefinition);
-                Object newBeanInstance = ReflectionUtils.invokeMethod(configBeanInstance, method);
-                singletonBeans.put(beanDefinition, newBeanInstance);
-            }
-        }
     }
 
     private boolean isConfigurationBean(Class<?> beanClass) {
