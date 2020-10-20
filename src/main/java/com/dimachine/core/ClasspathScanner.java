@@ -18,6 +18,13 @@ public class ClasspathScanner {
 
     public List<String> scan() {
         List<String> foundBeanDefinitions = new ArrayList<>();
+        if (packagesToScan.length > 0) {
+            doScanClasspath(foundBeanDefinitions);
+        }
+        return foundBeanDefinitions;
+    }
+
+    protected void doScanClasspath(List<String> foundBeanDefinitions) {
         try (ScanResult scanResult = new ClassGraph().enableAllInfo().acceptPackages(packagesToScan).scan()) {
             for (Class<?> scannedAnnotation : targetAnnotations) {
                 String routeAnnotation = scannedAnnotation.getName();
@@ -26,6 +33,5 @@ public class ClasspathScanner {
                 }
             }
         }
-        return foundBeanDefinitions;
     }
 }

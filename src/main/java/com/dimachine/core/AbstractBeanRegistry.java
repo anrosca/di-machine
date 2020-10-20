@@ -19,10 +19,10 @@ public abstract class AbstractBeanRegistry implements BeanRegistry {
         for (BeanDefinition beanDefinition : beanDefinitions) {
             this.beanDefinitions.add(beanDefinition);
             boolean addedNewBeanName = this.beanNames.add(beanDefinition.getBeanName());
-//            if (!addedNewBeanName) {
-//                throw new DuplicateBeanNameException(beanDefinition.getBeanName() +
-//                        " is already present in BeanFactory. Bean names should be unique.");
-//            }
+            if (!addedNewBeanName) {
+                throw new DuplicateBeanNameException(beanDefinition.getBeanName() +
+                        " is already present in BeanFactory. Bean names should be unique.");
+            }
         }
     }
 }

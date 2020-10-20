@@ -3,14 +3,12 @@ package com.dimachine.core.postprocessor;
 import com.dimachine.core.BeanInitialisationException;
 import com.dimachine.core.BeanPostProcessor;
 import com.dimachine.core.Order;
-import com.dimachine.core.annotation.Component;
 import com.dimachine.core.annotation.Ordered;
 import com.dimachine.core.annotation.PostConstruct;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-@Component
 @Ordered(Order.LEAST_PRECEDENCE)
 public class PostConstructAnnotationBeanPostProcessor implements BeanPostProcessor {
     @Override

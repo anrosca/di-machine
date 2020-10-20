@@ -9,6 +9,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFactory, BeanRegistry {
+    private static final List<Class<?>> targetAnnotations = List.of(Component.class, Service.class, Configuration.class);
+
     private final ClasspathScanner classpathScanner;
     private final BeanDefinitionMaker beanDefinitionMaker = new DefaultBeanDefinitionMaker();
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
@@ -16,12 +18,10 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     private final AnnotationConfigObjectFactory configObjectFactory = new AnnotationConfigObjectFactory(this);
 
     public DefaultBeanFactory(String... packagesToScan) {
-        List<Class<?>> targetAnnotations = List.of(Component.class, Service.class, Configuration.class);
         this.classpathScanner = new ClasspathScanner(targetAnnotations, packagesToScan);
     }
 
     public DefaultBeanFactory(Class<?>... configurationClasses) {
-        List<Class<?>> targetAnnotations = List.of(Component.class, Service.class, Configuration.class);
         this.classpathScanner = new ClasspathScanner(targetAnnotations);
         registerConfigurationClasses(configurationClasses);
     }

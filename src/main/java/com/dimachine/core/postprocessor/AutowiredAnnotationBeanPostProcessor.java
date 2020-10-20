@@ -2,7 +2,6 @@ package com.dimachine.core.postprocessor;
 
 import com.dimachine.core.*;
 import com.dimachine.core.annotation.Autowired;
-import com.dimachine.core.annotation.Component;
 import com.dimachine.core.annotation.Ordered;
 import com.dimachine.core.util.CollectionFactory;
 
@@ -12,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Component
 @Ordered(Order.HIGHEST_PRECEDENCE)
 public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
     private final BeanFactory beanFactory;
