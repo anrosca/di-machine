@@ -9,6 +9,7 @@ import com.dimachine.core.util.CollectionFactory;
 import java.lang.reflect.*;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Component
@@ -95,7 +96,46 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
         if (isCollection(field)) {
             return resolveCollectionFieldValue(bean, field);
         }
+        if (isMap(field)) {
+            return resolveMapFieldValue(bean, field);
+        }
         return beanFactory.getBean(field.getType());
+    }
+
+    private Object resolveMapFieldValue(Object bean, Field field) {
+        try {
+            return doResolveMapFieldValue(bean, field);
+        } catch (ClassNotFoundException e) {
+            throw new FieldInjectionFailedException("Could not autowire field " + field.getName() +
+                    " of bean " + bean.getClass(), e);
+        }
+    }
+
+    private Object doResolveMapFieldValue(Object bean, Field field) throws ClassNotFoundException {
+        ParameterizedType genericType = (ParameterizedType) field.getGenericType();
+        Type[] actualTypeArguments = genericType.getActualTypeArguments();
+        checkMapKeyType(field, actualTypeArguments[0]);
+        String valueTypeName = actualTypeArguments[1].getTypeName();
+        if (isWildcardType(valueTypeName)) {
+            valueTypeName = normalizeWildcardTypeName(valueTypeName, field);
+        }
+        Class<?> dependencyClass = Class.forName(valueTypeName);
+        return convertMapToType(dependencyClass, field.getType());
+    }
+
+    private void checkMapKeyType(Field field, Type actualTypeArgument) {
+        String keyTypeName = actualTypeArgument.getTypeName();
+        if (!keyTypeName.equals(String.class.getName())) {
+            throw new FieldInjectionFailedException("Field injection failed for field " + field.getName() +
+                    ". Map key is not a string");
+        }
+    }
+
+    private Object convertMapToType(Class<?> dependencyClass, Class<?> mapType) {
+        Map<String, ?> beansMapOfType = beanFactory.getBeansMapOfType(dependencyClass);
+        Map<Object, Object> resultingMap = CollectionFactory.newMapOfType(mapType);
+        resultingMap.putAll(beansMapOfType);
+        return resultingMap;
     }
 
     private Object resolveCollectionFieldValue(Object bean, Field field) {
@@ -138,5 +178,9 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
 
     private boolean isCollection(Field field) {
         return List.class.isAssignableFrom(field.getType()) || Set.class.isAssignableFrom(field.getType());
+    }
+
+    private boolean isMap(Field field) {
+        return Map.class.isAssignableFrom(field.getType());
     }
 }

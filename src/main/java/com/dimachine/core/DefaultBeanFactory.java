@@ -139,6 +139,14 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     }
 
     @Override
+    public <T> Map<String, T> getBeansMapOfType(Class<T> clazz) {
+        return singletonBeans.entrySet()
+                .stream()
+                .filter(beanEntry -> clazz.isAssignableFrom(beanEntry.getKey().getRealBeanClass()))
+                .collect(Collectors.toMap(beanEntry -> beanEntry.getKey().getBeanName(), beanEntry -> clazz.cast(beanEntry.getValue())));
+    }
+
+    @Override
     public void refresh() {
         BeanDefinition[] beanDefinitions = scanClasspath().stream()
                 .map(beanDefinitionMaker::makeBeanDefinition)

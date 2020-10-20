@@ -8,6 +8,7 @@ import java.lang.reflect.Proxy;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -153,6 +154,26 @@ public class DefaultBeanFactoryTest {
     @Test
     public void shouldSortBeanPostProcessorsAccordingToTheirOrder() {
         SimpleBeanDefinition beanDefinition = SimpleBeanDefinition.builder()
+                .className(TargetBean.class.getName())
+                .beanName("firstBean")
+                .build();
+        SimpleBeanDefinition beanPostProcessorDefinition = SimpleBeanDefinition.builder()
+                .className(YetAnotherTargetBean.class.getName())
+                .beanName("secondBean")
+                .build();
+        beanFactory.registerBeans(beanDefinition, beanPostProcessorDefinition);
+        beanFactory.refresh();
+
+        Map<String, TargetBean> beansMapOfType = beanFactory.getBeansMapOfType(TargetBean.class);
+
+        assertEquals(2, beansMapOfType.size());
+        assertTrue(beansMapOfType.get("firstBean") instanceof TargetBean);
+        assertTrue(beansMapOfType.get("secondBean") instanceof YetAnotherTargetBean);
+    }
+
+    @Test
+    public void test() {
+        SimpleBeanDefinition beanDefinition = SimpleBeanDefinition.builder()
                 .className(PostConstructAnnotationBeanPostProcessor.class.getName())
                 .beanName("postConstruct")
                 .build();
@@ -187,6 +208,8 @@ public class DefaultBeanFactoryTest {
             return 0;
         }
     }
+
+    private static class YetAnotherTargetBean extends TargetBean {}
 
     private static class BeanPostProcessorSpy implements BeanPostProcessor {
         @Override

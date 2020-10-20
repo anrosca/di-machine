@@ -1,6 +1,7 @@
 package com.dimachine.core;
 
 import java.util.List;
+import java.util.Map;
 
 public interface BeanFactory {
 
@@ -21,4 +22,6 @@ public interface BeanFactory {
     void registerSingleton(BeanDefinition beanDefinition, Object instance);
 
     <T> List<T> getAllBeansOfType(Class<T> clazz);
+
+    <T> Map<String, T> getBeansMapOfType(Class<T> clazz);
 }

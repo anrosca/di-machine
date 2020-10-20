@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -100,6 +101,37 @@ public class AutowiredAnnotationBeanPostProcessorTest {
     }
 
     @Test
+    public void whenAutowiringMapType_shouldInjectAllBeansOfThatTypeWithTheirNames() {
+        Map<String, FooService> expectedDependencies = Map.of("fooService", new FooService(), "yetAnotherFooService", new YetAnotherFooService());
+        when(beanFactory.getBeansMapOfType(FooService.class)).thenReturn(expectedDependencies);
+        AutowireMapBarService bean = new AutowireMapBarService();
+
+        postProcessor.postProcessBeforeInitialisation(bean, "testBean");
+
+        assertEquals(expectedDependencies, bean.fooServices);
+    }
+
+    @Test
+    public void whenAutowiringMapTypeWithWildcards_shouldInjectAllBeansOfThatTypeWithTheirNames() {
+        Map<String, FooService> expectedDependencies = Map.of("fooService", new FooService(), "yetAnotherFooService", new YetAnotherFooService());
+        when(beanFactory.getBeansMapOfType(FooService.class)).thenReturn(expectedDependencies);
+        AutowireMapWithWildcardsBarService bean = new AutowireMapWithWildcardsBarService();
+
+        postProcessor.postProcessBeforeInitialisation(bean, "testBean");
+
+        assertEquals(expectedDependencies, bean.fooServices);
+    }
+
+    @Test
+    public void whenAutowiringMapWithNonStringKeyType_shouldThrowFieldInjectionFailedException() {
+        Map<String, FooService> expectedDependencies = Map.of("fooService", new FooService(), "yetAnotherFooService", new YetAnotherFooService());
+        when(beanFactory.getBeansMapOfType(FooService.class)).thenReturn(expectedDependencies);
+        AutowireMapWithWrongKeyBarService bean = new AutowireMapWithWrongKeyBarService();
+
+        assertThrows(FieldInjectionFailedException.class, () -> postProcessor.postProcessBeforeInitialisation(bean, "testBean"));
+    }
+
+    @Test
     public void whenAutowiringListWithWildcardType_shouldInjectAllBeansOfThatType() {
         List<FooService> expectedDependencies = List.of(new FooService(), new YetAnotherFooService());
         when(beanFactory.getAllBeansOfType(FooService.class)).thenReturn(expectedDependencies);
@@ -182,5 +214,20 @@ public class AutowiredAnnotationBeanPostProcessorTest {
     private static class AutowireSetBarService {
         @Autowired
         private Set<FooService> fooServices;
+    }
+
+    private static class AutowireMapBarService {
+        @Autowired
+        private Map<String, FooService> fooServices;
+    }
+
+    private static class AutowireMapWithWildcardsBarService {
+        @Autowired
+        private Map<String, ? extends FooService> fooServices;
+    }
+
+    private static class AutowireMapWithWrongKeyBarService {
+        @Autowired
+        private Map<FooService, FooService> fooServices;
     }
 }
