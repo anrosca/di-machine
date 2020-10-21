@@ -3,6 +3,9 @@ package com.dimachine.core.util;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class ReflectionUtils {
 
@@ -23,7 +26,7 @@ public class ReflectionUtils {
         }
     }
 
-    public static Object invokeMethod(Object instance, Method method, Object...parameterValues) {
+    public static Object invokeMethod(Object instance, Method method, Object... parameterValues) {
         try {
             method.setAccessible(true);
             return method.invoke(instance, parameterValues);
@@ -38,5 +41,13 @@ public class ReflectionUtils {
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static List<Method> getDeclaredMethods(Class<?> clazz) {
+        List<Method> methods = new ArrayList<>();
+        do {
+            methods.addAll(Arrays.asList(clazz.getDeclaredMethods()));
+        } while ((clazz = clazz.getSuperclass()) != null);
+        return methods;
     }
 }
