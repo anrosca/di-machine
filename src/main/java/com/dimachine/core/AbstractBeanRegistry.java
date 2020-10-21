@@ -7,7 +7,7 @@ public abstract class AbstractBeanRegistry implements BeanRegistry {
     protected final Map<BeanDefinition, Object> singletonBeans = new ConcurrentHashMap<>();
     protected final Set<BeanDefinition> beanDefinitions = Collections.newSetFromMap(new ConcurrentHashMap<>());
     protected final DefaultObjectFactory objectFactory = new DefaultObjectFactory();
-    protected final Set<String> beanNames = new HashSet<>();
+    protected final Set<String> beanNames = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     @Override
     public void registerBeans(BeanDefinition... beanDefinitions) {

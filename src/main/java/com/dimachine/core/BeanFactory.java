@@ -3,7 +3,7 @@ package com.dimachine.core;
 import java.util.List;
 import java.util.Map;
 
-public interface BeanFactory {
+public interface BeanFactory extends AutoCloseable {
 
     Object getBean(String name);
 

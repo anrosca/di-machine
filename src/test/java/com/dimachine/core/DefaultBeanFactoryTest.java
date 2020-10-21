@@ -183,13 +183,31 @@ public class DefaultBeanFactoryTest {
         assertEquals(2, new HashSet<>(beans).size());
     }
 
-    private static class TargetBean implements Comparable<TargetBean> {
+    @Test
+    public void shouldCloseDisposableBeansUponBeanFactoryClosing() throws Exception {
+        beanFactory.registerBeans(beanDefinition);
+        beanFactory.refresh();
+        TargetBean.wasDestroyed = false;
+
+        beanFactory.close();
+
+        assertTrue(TargetBean.wasDestroyed);
+    }
+
+    private static class TargetBean implements Comparable<TargetBean>, DisposableBean {
+        private static boolean wasDestroyed;
+
         public TargetBean() {
         }
 
         @Override
         public int compareTo(TargetBean other) {
             return 0;
+        }
+
+        @Override
+        public void destroy() {
+            wasDestroyed = true;
         }
     }
 

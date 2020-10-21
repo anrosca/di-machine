@@ -6,6 +6,7 @@ import com.dimachine.core.annotation.Ordered;
 import com.dimachine.core.annotation.Service;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFactory, BeanRegistry {
@@ -13,9 +14,10 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
 
     private final ClasspathScanner classpathScanner;
     private final BeanDefinitionMaker beanDefinitionMaker = new DefaultBeanDefinitionMaker();
-    private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
+    private final List<BeanPostProcessor> beanPostProcessors = Collections.synchronizedList(new ArrayList<>());
     private final ProxyFactory proxyFactory = new DefaultProxyFactory();
     private final AnnotationConfigObjectFactory configObjectFactory = new AnnotationConfigObjectFactory(this);
+    private final AtomicBoolean wasClosed = new AtomicBoolean();
 
     public DefaultBeanFactory(String... packagesToScan) {
         this.classpathScanner = new ClasspathScanner(targetAnnotations, packagesToScan);
@@ -171,6 +173,25 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
 
     private void orderBeanPostProcessors() {
         beanPostProcessors.sort(new BeanPostProcessorOrderedComparator());
+    }
+
+    @Override
+    public void close() throws Exception {
+        if (wasClosed.compareAndSet(false, true)) {
+            for (Object singletonBean : singletonBeans.values()) {
+                if (singletonBean instanceof DisposableBean disposableBean) {
+                    disposableBean.destroy();
+                }
+            }
+            clearBeanFactory();
+        }
+    }
+
+    private void clearBeanFactory() {
+        beanPostProcessors.clear();
+        singletonBeans.clear();
+        beanDefinitions.clear();
+        beanNames.clear();
     }
 
     private static class BeanPostProcessorOrderedComparator implements Comparator<BeanPostProcessor> {
