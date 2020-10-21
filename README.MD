@@ -1,4 +1,4 @@
-## DI Machine
+## DI Machine [![Build Status](https://travis-ci.com/anrosca/di-machine.svg?branch=master)](https://travis-ci.com/github/anrosca/di-machine)
 
 A lightweight dependency injection framework copying (~~shamelessly~~) the Spring Framework.
 
