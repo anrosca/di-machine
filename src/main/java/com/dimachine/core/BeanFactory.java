@@ -2,6 +2,7 @@ package com.dimachine.core;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface BeanFactory extends AutoCloseable {
 
@@ -24,4 +25,6 @@ public interface BeanFactory extends AutoCloseable {
     <T> List<T> getAllBeansOfType(Class<T> clazz);
 
     <T> Map<String, T> getBeansMapOfType(Class<T> clazz);
+
+    Set<BeanDefinition> getBeanDefinitions();
 }

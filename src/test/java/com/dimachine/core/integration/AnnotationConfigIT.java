@@ -25,6 +25,7 @@ public class AnnotationConfigIT {
             assertNotNull(bean.getAutowireMap());
         }
         assertTrue(bean.destroyMethodWasCalled());
+        assertTrue(bean.annotatedDestroyMethodWasCalled());
     }
 
     @Configuration

@@ -136,6 +136,11 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     }
 
     @Override
+    public Set<BeanDefinition> getBeanDefinitions() {
+        return Set.copyOf(beanDefinitions);
+    }
+
+    @Override
     public void refresh() {
         loadFactories();
         BeanDefinition[] beanDefinitions = scanClasspath().stream()
@@ -178,12 +183,16 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     @Override
     public void close() throws Exception {
         if (wasClosed.compareAndSet(false, true)) {
-            for (Object singletonBean : singletonBeans.values()) {
-                if (singletonBean instanceof DisposableBean disposableBean) {
-                    disposableBean.destroy();
-                }
-            }
+            invokeDisposableBeans();
             clearBeanFactory();
+        }
+    }
+
+    protected void invokeDisposableBeans() throws Exception {
+        for (Object singletonBean : singletonBeans.values()) {
+            if (singletonBean instanceof DisposableBean disposableBean) {
+                disposableBean.destroy();
+            }
         }
     }
 

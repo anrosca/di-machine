@@ -4,6 +4,7 @@ import com.dimachine.core.DisposableBean;
 import com.dimachine.core.annotation.Autowired;
 import com.dimachine.core.annotation.Component;
 import com.dimachine.core.annotation.PostConstruct;
+import com.dimachine.core.annotation.PreDestroy;
 
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,7 @@ public class TestBean implements DisposableBean {
     private final FooService fooService;
     private boolean initMethodWasCalled;
     private boolean destroyMethodWasCalled;
+    private boolean annotatedDestroyMethodWasCalled;
 
     @Autowired
     private FooService autowiredField;
@@ -59,7 +61,16 @@ public class TestBean implements DisposableBean {
         destroyMethodWasCalled = true;
     }
 
+    @PreDestroy
+    private void close() {
+        annotatedDestroyMethodWasCalled = true;
+    }
+
     public boolean destroyMethodWasCalled() {
         return destroyMethodWasCalled;
+    }
+
+    public boolean annotatedDestroyMethodWasCalled() {
+        return annotatedDestroyMethodWasCalled;
     }
 }
