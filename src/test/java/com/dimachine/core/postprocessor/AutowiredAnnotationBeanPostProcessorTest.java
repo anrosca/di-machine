@@ -53,6 +53,15 @@ public class AutowiredAnnotationBeanPostProcessorTest {
     }
 
     @Test
+    public void shouldAutowireSettersAcceptingListsAnnotatedWithAutowired() {
+        ListSetterAutowireBarService barService = new ListSetterAutowireBarService();
+
+        postProcessor.postProcessBeforeInitialisation(barService, "beanName");
+
+        assertNotNull(barService.fooServices);
+    }
+
+    @Test
     public void shouldAutowireSettersAnnotatedWithAutowiredFromSuperclass() {
         SuperclassSetterBarService barService = new SuperclassSetterBarService();
 
@@ -94,6 +103,17 @@ public class AutowiredAnnotationBeanPostProcessorTest {
         Set<FooService> expectedDependencies = Set.of(new FooService(), new YetAnotherFooService());
         when(beanFactory.getAllBeansOfType(FooService.class)).thenReturn(new ArrayList<>(expectedDependencies));
         AutowireSetBarService bean = new AutowireSetBarService();
+
+        postProcessor.postProcessBeforeInitialisation(bean, "testBean");
+
+        assertEquals(expectedDependencies, bean.fooServices);
+    }
+
+    @Test
+    public void whenAutowiringMapTypeViaSetter_shouldInjectAllBeansOfThatTypeWithTheirNames() {
+        Map<String, FooService> expectedDependencies = Map.of("fooService", new FooService(), "yetAnotherFooService", new YetAnotherFooService());
+        when(beanFactory.getBeansMapOfType(FooService.class)).thenReturn(expectedDependencies);
+        MapSetterAutowireBarService bean = new MapSetterAutowireBarService();
 
         postProcessor.postProcessBeforeInitialisation(bean, "testBean");
 
@@ -183,6 +203,24 @@ public class AutowiredAnnotationBeanPostProcessorTest {
         @Autowired
         private void setFooService(FooService fooService) {
             this.fooService = fooService;
+        }
+    }
+
+    private static class ListSetterAutowireBarService {
+        protected List<FooService> fooServices;
+
+        @Autowired
+        private void setFooService(List<FooService> fooServices) {
+            this.fooServices = fooServices;
+        }
+    }
+
+    private static class MapSetterAutowireBarService {
+        protected Map<String, FooService> fooServices;
+
+        @Autowired
+        private void setFooService(Map<String, FooService> fooServices) {
+            this.fooServices = fooServices;
         }
     }
 

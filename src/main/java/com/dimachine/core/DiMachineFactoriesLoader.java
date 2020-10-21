@@ -44,11 +44,19 @@ public class DiMachineFactoriesLoader {
         return beanDefinitions;
     }
 
-    protected void loadProperties(Properties properties, InputStream inputStream) {
+    protected void loadProperties(Properties propertiesCollector, InputStream inputStream) {
         try {
+            Properties properties = new Properties();
             properties.load(inputStream);
+            mergeProperties(properties, propertiesCollector);
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void mergeProperties(Properties properties, Properties propertiesCollector) {
+        for (Map.Entry<Object, Object> entry : properties.entrySet()) {
+            propertiesCollector.merge(entry.getKey(), entry.getValue(), (v1, v2) -> v1 + "," + v2);
         }
     }
 }

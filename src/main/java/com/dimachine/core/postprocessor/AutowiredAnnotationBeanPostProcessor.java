@@ -39,19 +39,49 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
                 Autowired autowired = method.getAnnotation(Autowired.class);
                 if (autowired.required()) {
                     Class<?>[] parameterTypes = method.getParameterTypes();
-                    invokeMethod(bean, method, makeParameterValues(parameterTypes));
+                    invokeMethod(bean, method, makeParameterValues(parameterTypes, method));
                 }
             }
         }
     }
 
-    private Object[] makeParameterValues(Class<?>[] parameterTypes) {
+    private Object[] makeParameterValues(Class<?>[] parameterTypes, Method method) {
         Object[] parameterValues = new Object[parameterTypes.length];
         int parameterIndex = 0;
         for (Class<?> parameterType : parameterTypes) {
-            parameterValues[parameterIndex++] = beanFactory.getBean(parameterType);
+            parameterValues[parameterIndex++] = revolveParameterValue(parameterType, method);
         }
         return parameterValues;
+    }
+
+    private Object revolveParameterValue(Class<?> parameterType, Method method) {
+        if (isCollection(parameterType)) {
+            return resolveCollectionMethodParameterValue(parameterType, method);
+        }
+        if (isMap(parameterType)) {
+            return resolveMapMethodParameterValue(parameterType, method);
+        }
+        return beanFactory.getBean(parameterType);
+    }
+
+    private Object resolveMapMethodParameterValue(Class<?> parameterType, Method method) {
+        try {
+            ParameterizedType genericType = (ParameterizedType) method.getGenericParameterTypes()[0];
+            return doResolveMapFieldValue(method.getName(), genericType, parameterType);
+        } catch (ClassNotFoundException e) {
+            throw new SetterInjectionFailedException("Setter injection failed for setter " +
+                    method.getName() + ". Parameter class not found", e);
+        }
+    }
+
+    private Object resolveCollectionMethodParameterValue(Class<?> parameterType, Method method) {
+        try {
+            ParameterizedType genericType = (ParameterizedType) method.getGenericParameterTypes()[0];
+            return doResolveCollectionValue(genericType, parameterType, method.getName());
+        } catch (ClassNotFoundException e) {
+            throw new SetterInjectionFailedException("Setter injection failed for setter " + method.getName() +
+                    ". Parameter class not found", e);
+        }
     }
 
     private void invokeMethod(Object bean, Method method, Object[] parameterValues) {
@@ -91,10 +121,10 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
     }
 
     private Object resolveFieldValue(Object bean, Field field) {
-        if (isCollection(field)) {
+        if (isCollection(field.getType())) {
             return resolveCollectionFieldValue(bean, field);
         }
-        if (isMap(field)) {
+        if (isMap(field.getType())) {
             return resolveMapFieldValue(bean, field);
         }
         return beanFactory.getBean(field.getType());
@@ -102,29 +132,28 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
 
     private Object resolveMapFieldValue(Object bean, Field field) {
         try {
-            return doResolveMapFieldValue(bean, field);
+            return doResolveMapFieldValue(field.getName(), (ParameterizedType) field.getGenericType(), field.getType());
         } catch (ClassNotFoundException e) {
             throw new FieldInjectionFailedException("Could not autowire field " + field.getName() +
                     " of bean " + bean.getClass(), e);
         }
     }
 
-    private Object doResolveMapFieldValue(Object bean, Field field) throws ClassNotFoundException {
-        ParameterizedType genericType = (ParameterizedType) field.getGenericType();
+    private Object doResolveMapFieldValue(String entityName, ParameterizedType genericType, Class<?> targetType) throws ClassNotFoundException {
         Type[] actualTypeArguments = genericType.getActualTypeArguments();
-        checkMapKeyType(field, actualTypeArguments[0]);
+        checkMapKeyType(entityName, actualTypeArguments[0]);
         String valueTypeName = actualTypeArguments[1].getTypeName();
         if (isWildcardType(valueTypeName)) {
-            valueTypeName = normalizeWildcardTypeName(valueTypeName, field);
+            valueTypeName = normalizeWildcardTypeName(valueTypeName, entityName);
         }
         Class<?> dependencyClass = Class.forName(valueTypeName);
-        return convertMapToType(dependencyClass, field.getType());
+        return convertMapToType(dependencyClass, targetType);
     }
 
-    private void checkMapKeyType(Field field, Type actualTypeArgument) {
+    private void checkMapKeyType(String entityName, Type actualTypeArgument) {
         String keyTypeName = actualTypeArgument.getTypeName();
         if (!keyTypeName.equals(String.class.getName())) {
-            throw new FieldInjectionFailedException("Field injection failed for field " + field.getName() +
+            throw new FieldInjectionFailedException("Field injection failed for field " + entityName +
                     ". Map key is not a string");
         }
     }
@@ -146,14 +175,17 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
     }
 
     private Object doResolveCollectionFieldValue(Field field) throws ClassNotFoundException {
-        ParameterizedType genericType = (ParameterizedType) field.getGenericType();
+        return doResolveCollectionValue((ParameterizedType) field.getGenericType(), field.getType(), field.getName());
+    }
+
+    private Collection<?> doResolveCollectionValue(ParameterizedType genericType, Class<?> targetType, String entityName) throws ClassNotFoundException {
         Type[] actualTypeArguments = genericType.getActualTypeArguments();
         String dependencyTypeName = actualTypeArguments[0].getTypeName();
         if (isWildcardType(dependencyTypeName)) {
-            dependencyTypeName = normalizeWildcardTypeName(dependencyTypeName, field);
+            dependencyTypeName = normalizeWildcardTypeName(dependencyTypeName, entityName);
         }
         Class<?> dependencyClass = Class.forName(dependencyTypeName);
-        return convertCollectionToType(dependencyClass, field.getType());
+        return convertCollectionToType(dependencyClass, targetType);
     }
 
     private Collection<?> convertCollectionToType(Class<?> dependencyClass, Class<?> collectionType) {
@@ -162,10 +194,10 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
         return collection;
     }
 
-    private String normalizeWildcardTypeName(String dependencyTypeName, Field field) {
+    private String normalizeWildcardTypeName(String dependencyTypeName, String fieldName) {
         String normalizedTypeName = dependencyTypeName.substring(dependencyTypeName.lastIndexOf(" ") + 1);
         if (normalizedTypeName.contains("?"))
-            throw new FieldInjectionFailedException("Could not autowired field " + field.getName() +
+            throw new FieldInjectionFailedException("Could not autowired field " + fieldName +
                     " because it's type is wildcard '" + normalizedTypeName + "'");
         return normalizedTypeName;
     }
@@ -174,11 +206,11 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
         return dependencyTypeName.contains("?");
     }
 
-    private boolean isCollection(Field field) {
-        return List.class.isAssignableFrom(field.getType()) || Set.class.isAssignableFrom(field.getType());
+    private boolean isCollection(Class<?> type) {
+        return List.class.isAssignableFrom(type) || Set.class.isAssignableFrom(type);
     }
 
-    private boolean isMap(Field field) {
-        return Map.class.isAssignableFrom(field.getType());
+    private boolean isMap(Class<?> type) {
+        return Map.class.isAssignableFrom(type);
     }
 }
