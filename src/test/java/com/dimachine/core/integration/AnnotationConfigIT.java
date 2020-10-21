@@ -7,18 +7,24 @@ import org.junit.jupiter.api.Test;
 import test.FooService;
 import test.TestBean;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class AnnotationConfigIT {
 
     @Test
-    public void shouldBeAbleToGetBeansViaJavaConfiguration() {
-        DefaultBeanFactory beanFactory = new DefaultBeanFactory(AppConfiguration.class);
-        beanFactory.refresh();
+    public void shouldBeAbleToGetBeansViaJavaConfiguration() throws Exception {
+        TestBean bean;
+        try (DefaultBeanFactory beanFactory = new DefaultBeanFactory(AppConfiguration.class)) {
+            beanFactory.refresh();
 
-        TestBean bean = beanFactory.getBean(TestBean.class);
-
-        assertTrue(bean.initMethodWasCalled());
+            bean = beanFactory.getBean(TestBean.class);
+            assertTrue(bean.initMethodWasCalled());
+            assertNotNull(bean.getAutowiredField());
+            assertNotNull(bean.getAutowireList());
+            assertNotNull(bean.getAutowireMap());
+        }
+        assertTrue(bean.destroyMethodWasCalled());
     }
 
     @Configuration

@@ -121,7 +121,7 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     public <T> List<T> getAllBeansOfType(Class<T> clazz) {
         return singletonBeans.entrySet()
                 .stream()
-                .filter(beanEntry -> clazz.isAssignableFrom(beanEntry.getKey().getRealBeanClass()))
+                .filter(beanEntry -> clazz.isAssignableFrom(beanEntry.getKey().getBeanAssignableClass()))
                 .map(Map.Entry::getValue)
                 .map(clazz::cast)
                 .collect(Collectors.toList());
@@ -131,7 +131,7 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     public <T> Map<String, T> getBeansMapOfType(Class<T> clazz) {
         return singletonBeans.entrySet()
                 .stream()
-                .filter(beanEntry -> clazz.isAssignableFrom(beanEntry.getKey().getRealBeanClass()))
+                .filter(beanEntry -> clazz.isAssignableFrom(beanEntry.getKey().getBeanAssignableClass()))
                 .collect(Collectors.toMap(beanEntry -> beanEntry.getKey().getBeanName(), beanEntry -> clazz.cast(beanEntry.getValue())));
     }
 
