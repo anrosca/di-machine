@@ -1,5 +1,6 @@
 package com.dimachine.core;
 
+import com.dimachine.core.annotation.PreDestroy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -194,8 +195,20 @@ public class DefaultBeanFactoryTest {
         assertTrue(TargetBean.wasDestroyed);
     }
 
+    @Test
+    public void shouldCallPreDestroyMethodsUponBeanFactoryClosing() throws Exception {
+        beanFactory.registerBeans(beanDefinition);
+        beanFactory.refresh();
+        TargetBean.preDestroyMethodCalled = false;
+
+        beanFactory.close();
+
+        assertTrue(TargetBean.preDestroyMethodCalled);
+    }
+
     private static class TargetBean implements Comparable<TargetBean>, DisposableBean {
         private static boolean wasDestroyed;
+        private static boolean preDestroyMethodCalled;
 
         public TargetBean() {
         }
@@ -208,6 +221,11 @@ public class DefaultBeanFactoryTest {
         @Override
         public void destroy() {
             wasDestroyed = true;
+        }
+
+        @PreDestroy
+        private void close() {
+            preDestroyMethodCalled = true;
         }
     }
 
