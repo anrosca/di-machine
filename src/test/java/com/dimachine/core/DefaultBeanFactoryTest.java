@@ -205,6 +205,20 @@ public class DefaultBeanFactoryTest {
     }
 
     @Test
+    public void shouldBeAbleToGetAllBeanDefinitions() {
+        beanFactory.registerBeans(beanDefinition);
+
+        Set<BeanDefinition> allBeanDefinitions = beanFactory.getBeanDefinitions();
+
+        assertEquals(Set.of(beanDefinition), allBeanDefinitions);
+    }
+
+    @Test
+    public void whenNoBeanDefinitionsAreRegistered_getBeanDefinitionsShouldReturnEmptyCollection() {
+        assertEquals(0, beanFactory.getBeanDefinitions().size());
+    }
+
+    @Test
     public void shouldBeAbleToRegisterJavaConfigClasses_afterBeanFactoryCreation() {
         beanFactory.register(AppConfig.class);
         beanFactory.refresh();
