@@ -1,13 +1,11 @@
 package com.dimachine.core;
 
+import com.dimachine.core.annotation.Configuration;
 import com.dimachine.core.annotation.PreDestroy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -166,7 +164,7 @@ public class DefaultBeanFactoryTest {
         Map<String, TargetBean> beansMapOfType = beanFactory.getBeansMapOfType(TargetBean.class);
 
         assertEquals(2, beansMapOfType.size());
-        assertTrue(beansMapOfType.get("firstBean") instanceof TargetBean);
+        assertNotNull(beansMapOfType.get("firstBean"));
         assertTrue(beansMapOfType.get("secondBean") instanceof YetAnotherTargetBean);
     }
 
@@ -204,6 +202,19 @@ public class DefaultBeanFactoryTest {
         beanFactory.close();
 
         assertTrue(TargetBean.preDestroyMethodCalled);
+    }
+
+    @Test
+    public void shouldBeAbleToRegisterJavaConfigClasses_afterBeanFactoryCreation() {
+        beanFactory.register(AppConfig.class);
+        beanFactory.refresh();
+
+        AppConfig config = beanFactory.getBean(AppConfig.class);
+        assertNotNull(config);
+    }
+
+    @Configuration
+    static class AppConfig {
     }
 
     private static class TargetBean implements Comparable<TargetBean>, DisposableBean {
