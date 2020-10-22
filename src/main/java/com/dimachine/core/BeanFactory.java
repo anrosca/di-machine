@@ -6,6 +6,8 @@ import java.util.Set;
 
 public interface BeanFactory extends AutoCloseable {
 
+    void register(Class<?>... configurationClasses);
+
     Object getBean(String name);
 
     <T> T getBean(String name, Class<T> clazz);

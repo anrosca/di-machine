@@ -25,10 +25,11 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
 
     public DefaultBeanFactory(Class<?>... configurationClasses) {
         this.classpathScanner = new ClasspathScanner(targetAnnotations);
-        registerConfigurationClasses(configurationClasses);
+        register(configurationClasses);
     }
 
-    private void registerConfigurationClasses(Class<?>[] configurationClasses) {
+    @Override
+    public void register(Class<?>... configurationClasses) {
         BeanDefinition[] beanDefinitions = Arrays.stream(configurationClasses)
                 .map(configClass -> beanDefinitionMaker.makeBeanDefinition(configClass.getName()))
                 .toArray(BeanDefinition[]::new);
