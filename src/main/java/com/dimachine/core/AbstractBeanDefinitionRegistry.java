@@ -1,9 +1,6 @@
 package com.dimachine.core;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class AbstractBeanDefinitionRegistry implements BeanDefinitionRegistry {
@@ -34,11 +31,17 @@ public abstract class AbstractBeanDefinitionRegistry implements BeanDefinitionRe
     }
 
     @Override
-    public BeanDefinition getBeanDefinition(Class<?> beanClass) {
+    public Optional<BeanDefinition> getBeanDefinition(Class<?> beanClass) {
         return beanDefinitions.stream()
                 .filter(beanDefinition -> beanClass.isAssignableFrom(beanDefinition.getBeanAssignableClass()))
-                .findFirst()
-                .orElseThrow(() -> new NoSuchBeanDefinitionException("No bean definition of type " + beanClass + " found"));
+                .findFirst();
+    }
+
+    @Override
+    public Optional<BeanDefinition> getBeanDefinition(String beanName) {
+        return beanDefinitions.stream()
+                .filter(beanDefinition -> beanName.equals(beanDefinition.getBeanName()))
+                .findFirst();
     }
 
     @Override

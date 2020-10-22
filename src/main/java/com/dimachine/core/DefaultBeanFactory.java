@@ -63,7 +63,8 @@ public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implement
 
     @Override
     public <T> T getBean(Class<T> clazz) {
-        BeanDefinition foundBeanDefinition = getBeanDefinition(clazz);
+        BeanDefinition foundBeanDefinition = getBeanDefinition(clazz)
+                .orElseThrow(() -> new NoSuchBeanDefinitionException("No bean definition of type " + clazz + " found"));
         if (foundBeanDefinition.isPrototype()) {
             return instantiatePrototype(clazz, foundBeanDefinition);
         }
@@ -93,16 +94,39 @@ public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implement
 
     @Override
     public boolean contains(String beanName) {
-        return singletonBeans.entrySet()
-                .stream()
-                .anyMatch(beanEntry -> beanEntry.getKey().getBeanName().equals(beanName));
+        return getBeanDefinition(beanName)
+                .map(beanDefinition -> contains(beanName, beanDefinition))
+                .orElse(false);
+    }
+
+    private Boolean contains(String beanName, BeanDefinition beanDefinition) {
+        if (beanDefinition.isSingleton()) {
+            return singletonBeans.entrySet()
+                    .stream()
+                    .anyMatch(beanEntry -> beanName.equals(beanEntry.getKey().getBeanName()));
+        }
+        return beanName.equals(beanDefinition.getBeanName());
     }
 
     @Override
     public <T> boolean contains(Class<T> clazz) {
+        return getBeanDefinition(clazz)
+                .map(beanDefinition -> contains(clazz, beanDefinition))
+                .orElse(false);
+    }
+
+    private <T> Boolean contains(Class<T> clazz, BeanDefinition beanDefinition) {
+        if (beanDefinition.isSingleton()) {
+            return containsSingleton(clazz);
+        }
+        return clazz.isAssignableFrom(beanDefinition.getBeanAssignableClass());
+    }
+
+    @Override
+    public <T> boolean containsSingleton(Class<T> singletonClass) {
         return singletonBeans.entrySet()
                 .stream()
-                .anyMatch(beanEntry -> clazz.isAssignableFrom(beanEntry.getValue().getClass()));
+                .anyMatch(beanEntry -> singletonClass.isAssignableFrom(beanEntry.getKey().getBeanAssignableClass()));
     }
 
     @Override

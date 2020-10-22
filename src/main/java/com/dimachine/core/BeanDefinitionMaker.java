@@ -1,5 +1,5 @@
 package com.dimachine.core;
 
-public sealed interface BeanDefinitionMaker permits DefaultBeanDefinitionMaker {
+public interface BeanDefinitionMaker {
     BeanDefinition makeBeanDefinition(String className);
 }

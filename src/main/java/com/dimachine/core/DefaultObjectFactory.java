@@ -36,7 +36,8 @@ public class DefaultObjectFactory implements ObjectFactory {
     private void registerBeanDependencies(Class<?>[] beans, DefaultBeanFactory beanFactory) {
         for (Class<?> beanClass : beans) {
             if (!beanFactory.contains(beanClass)) {
-                BeanDefinition beanDefinition = beanFactory.getBeanDefinition(beanClass);
+                BeanDefinition beanDefinition = beanFactory.getBeanDefinition(beanClass)
+                        .orElseThrow(() -> new NoSuchBeanDefinitionException("No bean definition of type " + beanClass + " found"));
                 beanFactory.registerSingleton(beanDefinition, instantiate(beanDefinition.getRealBeanClass(), beanFactory));
             }
         }
@@ -82,7 +83,8 @@ public class DefaultObjectFactory implements ObjectFactory {
                 Class<?>[] dependenciesTypes = dependencyConstructor.getParameterTypes();
                 for (Class<?> dependencyClass : dependenciesTypes) {
                     if (dependencyClass.equals(beanClass))
-                        throw new BeanCurrentlyInCreationException("Circular dependency between " + beanClass + " and " + parameterClass);
+                        throw new BeanCurrentlyInCreationException("Circular dependency between " + beanClass +
+                                " and " + parameterClass);
                 }
             }
         }

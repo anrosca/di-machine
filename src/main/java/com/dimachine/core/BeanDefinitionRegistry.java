@@ -1,6 +1,7 @@
 package com.dimachine.core;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public interface BeanDefinitionRegistry {
@@ -10,7 +11,9 @@ public interface BeanDefinitionRegistry {
 
     Set<BeanDefinition> getBeanDefinitions();
 
-    BeanDefinition getBeanDefinition(Class<?> beanClass);
+    Optional<BeanDefinition> getBeanDefinition(Class<?> beanClass);
+
+    Optional<BeanDefinition> getBeanDefinition(String beanName);
 
     <T> boolean containsBeanDefinitionOfType(Class<T> clazz);
 }
