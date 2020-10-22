@@ -74,12 +74,18 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     }
 
     @SuppressWarnings("unchecked")
-    protected <T> T instantiatePrototype(Class<T> clazz, BeanDefinition beanDefinition) {
+    private  <T> T instantiatePrototype(Class<T> clazz, BeanDefinition beanDefinition) {
+        String beanName = beanDefinition.getBeanName();
         if (beanDefinition.getClassName() == null) {
             ObjectProvider objectProvider = beanDefinition.getObjectProvider();
-            return (T) objectProvider.makeObject(this);
+            return (T) postProcessBeanInstance(objectProvider.makeObject(this), beanName);
         }
-        return objectFactory.instantiate(clazz, this);
+        return (T) postProcessBeanInstance(objectFactory.instantiate(clazz, this), beanName);
+    }
+
+    private Object postProcessBeanInstance(Object beanInstance, String beanName) {
+        beanInstance = postProcessBeanBeforeInitialisation(beanInstance, beanName);
+        return postProcessBeanAfterInitialisation(beanInstance, beanName);
     }
 
     @Override
@@ -153,7 +159,7 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
         invokeBeanPostProcessors();
     }
 
-    protected void loadFactories() {
+    private void loadFactories() {
         DiMachineFactoriesLoader factoriesLoader = new DiMachineFactoriesLoader();
         factoriesLoader.load().forEach(this::registerBeans);
     }
@@ -189,7 +195,7 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
         }
     }
 
-    protected void invokeDisposableBeans() throws Exception {
+    private void invokeDisposableBeans() throws Exception {
         for (Object singletonBean : singletonBeans.values()) {
             if (singletonBean instanceof DisposableBean disposableBean) {
                 disposableBean.destroy();
@@ -221,29 +227,37 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     }
 
     private void postProcessBeforeInitialisation() {
-        for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
-            for (Map.Entry<BeanDefinition, Object> singletonBean : singletonBeans.entrySet()) {
-                Object bean = singletonBean.getValue();
-                String beanName = singletonBean.getKey().getBeanName();
-                if (!isBeanPostProcessor(bean)) {
-                    Object newBeanInstance = beanPostProcessor.postProcessBeforeInitialisation(bean, beanName);
-                    singletonBean.setValue(newBeanInstance);
-                }
-            }
+        for (Map.Entry<BeanDefinition, Object> singletonBean : singletonBeans.entrySet()) {
+            String beanName = singletonBean.getKey().getBeanName();
+            Object newBeanInstance = postProcessBeanBeforeInitialisation(singletonBean.getValue(), beanName);
+            singletonBean.setValue(newBeanInstance);
         }
     }
 
-    private void postProcessAfterInitialisation() {
+    private Object postProcessBeanBeforeInitialisation(Object bean, String beanName) {
         for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
-            for (Map.Entry<BeanDefinition, Object> singletonBean : singletonBeans.entrySet()) {
-                Object bean = singletonBean.getValue();
-                String beanName = singletonBean.getKey().getBeanName();
-                if (!isBeanPostProcessor(bean)) {
-                    Object newBeanInstance = beanPostProcessor.postProcessAfterInitialisation(bean, beanName);
-                    singletonBean.setValue(newBeanInstance);
-                }
+            if (!isBeanPostProcessor(bean)) {
+                bean = beanPostProcessor.postProcessBeforeInitialisation(bean, beanName);
             }
         }
+        return bean;
+    }
+
+    private void postProcessAfterInitialisation() {
+        for (Map.Entry<BeanDefinition, Object> singletonBean : singletonBeans.entrySet()) {
+            String beanName = singletonBean.getKey().getBeanName();
+            Object newBeanInstance = postProcessBeanAfterInitialisation(singletonBean.getValue(), beanName);
+            singletonBean.setValue(newBeanInstance);
+        }
+    }
+
+    private Object postProcessBeanAfterInitialisation(Object bean, String beanName) {
+        for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
+            if (!isBeanPostProcessor(bean)) {
+                bean = beanPostProcessor.postProcessAfterInitialisation(bean, beanName);
+            }
+        }
+        return bean;
     }
 
     private void instantiateSingletonBeans() {
