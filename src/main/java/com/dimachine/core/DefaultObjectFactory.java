@@ -52,11 +52,12 @@ public class DefaultObjectFactory implements ObjectFactory {
         return arguments;
     }
 
-    private Constructor<?> getGreediestParamConstructor(Constructor<?>[] declaredConstructors, BeanFactory beanFactory, Class<?> beanClass) {
+    private Constructor<?> getGreediestParamConstructor(Constructor<?>[] declaredConstructors,
+                                                        BeanDefinitionRegistry beanDefinitionRegistry, Class<?> beanClass) {
         for (Constructor<?> constructor : declaredConstructors) {
             Class<?>[] parameterTypes = constructor.getParameterTypes();
             if (!isDefaultConstructor(constructor)) {
-                if (canSatisfyParameters(beanFactory, parameterTypes)) {
+                if (canSatisfyParameters(beanDefinitionRegistry, parameterTypes)) {
                     checkForCycles(constructor, beanClass);
                     return constructor;
                 }
@@ -65,10 +66,10 @@ public class DefaultObjectFactory implements ObjectFactory {
         return getDefaultConstructor(declaredConstructors);
     }
 
-    private boolean canSatisfyParameters(BeanFactory beanFactory, Class<?>[] parameterTypes) {
+    private boolean canSatisfyParameters(BeanDefinitionRegistry beanDefinitionRegistry, Class<?>[] parameterTypes) {
         boolean canSatisfyParameters = true;
         for (Class<?> parameterType : parameterTypes) {
-            canSatisfyParameters &= beanFactory.containsBeanDefinitionOfType(parameterType);
+            canSatisfyParameters &= beanDefinitionRegistry.containsBeanDefinitionOfType(parameterType);
         }
         return canSatisfyParameters;
     }

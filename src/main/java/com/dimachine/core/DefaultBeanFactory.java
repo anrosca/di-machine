@@ -6,12 +6,15 @@ import com.dimachine.core.annotation.Ordered;
 import com.dimachine.core.annotation.Service;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFactory, BeanRegistry {
+public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implements BeanFactory, BeanDefinitionRegistry {
     private static final List<Class<?>> targetAnnotations = List.of(Component.class, Service.class, Configuration.class);
 
+    private final Map<BeanDefinition, Object> singletonBeans = new ConcurrentHashMap<>();
+    private final DefaultObjectFactory objectFactory = new DefaultObjectFactory();
     private final ClasspathScanner classpathScanner;
     private final BeanDefinitionMaker beanDefinitionMaker = new DefaultBeanDefinitionMaker();
     private final List<BeanPostProcessor> beanPostProcessors = Collections.synchronizedList(new ArrayList<>());
@@ -74,7 +77,7 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     }
 
     @SuppressWarnings("unchecked")
-    private  <T> T instantiatePrototype(Class<T> clazz, BeanDefinition beanDefinition) {
+    private <T> T instantiatePrototype(Class<T> clazz, BeanDefinition beanDefinition) {
         String beanName = beanDefinition.getBeanName();
         if (beanDefinition.getClassName() == null) {
             ObjectProvider objectProvider = beanDefinition.getObjectProvider();
@@ -100,20 +103,6 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
         return singletonBeans.entrySet()
                 .stream()
                 .anyMatch(beanEntry -> clazz.isAssignableFrom(beanEntry.getValue().getClass()));
-    }
-
-    @Override
-    public <T> boolean containsBeanDefinitionOfType(Class<T> clazz) {
-        return beanDefinitions.stream()
-                .anyMatch(beanDefinition -> clazz.isAssignableFrom(beanDefinition.getBeanAssignableClass()));
-    }
-
-    @Override
-    public BeanDefinition getBeanDefinition(Class<?> beanClass) {
-        return beanDefinitions.stream()
-                .filter(beanDefinition -> beanClass.isAssignableFrom(beanDefinition.getBeanAssignableClass()))
-                .findFirst()
-                .orElseThrow(() -> new NoSuchBeanDefinitionException("No bean definition of type " + beanClass + " found"));
     }
 
     @Override
@@ -143,8 +132,11 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
     }
 
     @Override
-    public Set<BeanDefinition> getBeanDefinitions() {
-        return Set.copyOf(beanDefinitions);
+    public void close() throws Exception {
+        if (wasClosed.compareAndSet(false, true)) {
+            invokeDisposableBeans();
+            clearBeanFactory();
+        }
     }
 
     @Override
@@ -185,14 +177,6 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
 
     private void orderBeanPostProcessors() {
         beanPostProcessors.sort(new BeanPostProcessorOrderedComparator());
-    }
-
-    @Override
-    public void close() throws Exception {
-        if (wasClosed.compareAndSet(false, true)) {
-            invokeDisposableBeans();
-            clearBeanFactory();
-        }
     }
 
     private void invokeDisposableBeans() throws Exception {
