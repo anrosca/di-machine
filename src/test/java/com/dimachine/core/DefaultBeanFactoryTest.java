@@ -21,7 +21,7 @@ public class DefaultBeanFactoryTest {
     public void setUp() {
         beanFactory = new DefaultBeanFactory(new String[]{}) {
             @Override
-            protected List<String> scanClasspath() {
+            protected List<String> scanClasspath(List<String> additionalPackages) {
                 return Collections.emptyList();
             }
         };
