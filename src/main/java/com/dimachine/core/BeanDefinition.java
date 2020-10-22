@@ -18,4 +18,6 @@ public interface BeanDefinition {
     ObjectProvider getObjectProvider();
 
     void setObjectProvider(ObjectProvider objectProvider);
+
+    boolean isCompatibleWith(String beanName, Class<?> clazz);
 }

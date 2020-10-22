@@ -147,6 +147,50 @@ public class DefaultBeanFactoryTest {
     }
 
     @Test
+    public void shouldBeAbleToGetPrototypeBeanByName() {
+        SimpleBeanDefinition beanDefinition = SimpleBeanDefinition.builder()
+                .className(TargetBean.class.getName())
+                .beanName("targetBean")
+                .scope(BeanScope.PROTOTYPE)
+                .build();
+        beanFactory.registerBeans(beanDefinition);
+        beanFactory.refresh();
+
+        TargetBean firstPrototype = (TargetBean) beanFactory.getBean("targetBean");
+        TargetBean secondPrototype = (TargetBean) beanFactory.getBean("targetBean");
+
+        assertNotNull(firstPrototype);
+        assertNotNull(secondPrototype);
+        assertEquals(TargetBean.class, firstPrototype.getClass());
+        assertEquals(TargetBean.class, secondPrototype.getClass());
+        assertFalse(beanFactory.containsSingleton(firstPrototype.getClass()));
+        assertFalse(beanFactory.containsSingleton(secondPrototype.getClass()));
+        assertNotSame(firstPrototype, secondPrototype);
+    }
+
+    @Test
+    public void shouldBeAbleToGetPrototypeBeanByTypeAndName() {
+        SimpleBeanDefinition beanDefinition = SimpleBeanDefinition.builder()
+                .className(TargetBean.class.getName())
+                .beanName("targetBean")
+                .scope(BeanScope.PROTOTYPE)
+                .build();
+        beanFactory.registerBeans(beanDefinition);
+        beanFactory.refresh();
+
+        TargetBean firstPrototype = beanFactory.getBean("targetBean", TargetBean.class);
+        TargetBean secondPrototype = beanFactory.getBean("targetBean", TargetBean.class);
+
+        assertNotNull(firstPrototype);
+        assertNotNull(secondPrototype);
+        assertEquals(TargetBean.class, firstPrototype.getClass());
+        assertEquals(TargetBean.class, secondPrototype.getClass());
+        assertFalse(beanFactory.containsSingleton(firstPrototype.getClass()));
+        assertFalse(beanFactory.containsSingleton(secondPrototype.getClass()));
+        assertNotSame(firstPrototype, secondPrototype);
+    }
+
+    @Test
     public void shouldBeAbleToGetBeanByAssignableTypeAndName_whenItIsPresentInBeanFactory() {
         SimpleBeanDefinition beanDefinition = SimpleBeanDefinition.builder()
                 .className(TargetBean.class.getName())
