@@ -18,7 +18,7 @@ public class AnnotationConfigIT {
         try (DefaultBeanFactory beanFactory = new DefaultBeanFactory(AppConfiguration.class)) {
             beanFactory.refresh();
 
-            bean = beanFactory.getBean(TestBean.class);
+            bean = beanFactory.getBean("testBean", TestBean.class);
             assertTrue(bean.initMethodWasCalled());
             assertNotNull(bean.getAutowiredField());
             assertNotNull(bean.getAutowireList());

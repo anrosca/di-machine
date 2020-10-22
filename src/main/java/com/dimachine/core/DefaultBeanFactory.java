@@ -51,7 +51,7 @@ public class DefaultBeanFactory extends AbstractBeanRegistry implements BeanFact
         return singletonBeans.entrySet()
                 .stream()
                 .filter(beanEntry -> beanEntry.getKey().getBeanName().equals(name))
-                .filter(beanEntry -> clazz.isAssignableFrom(beanEntry.getKey().getRealBeanClass()))
+                .filter(beanEntry -> clazz.isAssignableFrom(beanEntry.getKey().getBeanAssignableClass()))
                 .map(Map.Entry::getValue)
                 .findFirst()
                 .map(clazz::cast)
