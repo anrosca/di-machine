@@ -22,7 +22,7 @@ public class AnnotationConfigObjectFactory {
         for (Method method : originalConfigClass.getMethods()) {
             if (method.isAnnotationPresent(Bean.class)) {
                 BeanDefinition beanDefinition = beanDefinitionScanner.makeBeanDefinition(method);
-                setBeanDefinitionObjectFactory(configBeanInstance, beanDefinition);
+                setBeanDefinitionObjectFactory(configBeanInstance, beanDefinition, originalConfigClass);
                 beanFactory.registerBeans(beanDefinition);
                 if (beanDefinition.isSingleton()) {
                     Class<?>[] parameterTypes = method.getParameterTypes();
@@ -37,9 +37,9 @@ public class AnnotationConfigObjectFactory {
         processUnresolvedMethods(configBeanInstance, unresolvedMethods);
     }
 
-    protected void setBeanDefinitionObjectFactory(Object configBeanInstance, BeanDefinition beanDefinition) {
+    protected void setBeanDefinitionObjectFactory(Object configBeanInstance, BeanDefinition beanDefinition, Class<?> originalConfigClass) {
         if (beanDefinition.isPrototype()) {
-            ObjectProvider objectProvider = new JavaConfigObjectProvider(configBeanInstance, beanDefinition);
+            ObjectProvider objectProvider = new JavaConfigObjectProvider(configBeanInstance, beanDefinition, originalConfigClass);
             beanDefinition.setObjectProvider(objectProvider);
         }
     }
