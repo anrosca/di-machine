@@ -31,6 +31,10 @@ public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implement
         register(configurationClasses);
     }
 
+    public DefaultBeanFactory() {
+        this.classpathScanner = new ClasspathScanner(targetAnnotations);
+    }
+
     @Override
     public void register(Class<?>... configurationClasses) {
         BeanDefinition[] beanDefinitions = Arrays.stream(configurationClasses)
@@ -41,6 +45,11 @@ public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implement
 
     @Override
     public Object getBean(String name) {
+        BeanDefinition foundBeanDefinition = getBeanDefinition(name)
+                .orElseThrow(() -> new NoSuchBeanDefinitionException("No bean definition with " + name + " found"));
+        if (foundBeanDefinition.isPrototype()) {
+            return instantiatePrototype(foundBeanDefinition);
+        }
         return singletonBeans.entrySet()
                 .stream()
                 .filter(entry -> entry.getKey().getBeanName().equals(name))
@@ -50,15 +59,13 @@ public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implement
     }
 
     @Override
-    public <T> T getBean(String name, Class<T> clazz) {
-        return singletonBeans.entrySet()
-                .stream()
-                .filter(beanEntry -> beanEntry.getKey().getBeanName().equals(name))
-                .filter(beanEntry -> clazz.isAssignableFrom(beanEntry.getKey().getBeanAssignableClass()))
-                .map(Map.Entry::getValue)
-                .findFirst()
-                .map(clazz::cast)
-                .orElseThrow(() -> new NoSuchBeanDefinitionException("No bean with name " + name + " and type " + clazz + " found"));
+    public <T> T getBean(String beanName, Class<T> clazz) {
+        BeanDefinition foundBeanDefinition = getBeanDefinition(beanName)
+                .orElseThrow(() -> new NoSuchBeanDefinitionException("No bean definition with " + beanName + " and type " + clazz + " found"));
+        if (!foundBeanDefinition.isCompatibleWith(beanName, clazz)) {
+            throw new NoSuchBeanDefinitionException("No bean definition with " + beanName + " and type " + clazz + " found");
+        }
+        return getBean(clazz);
     }
 
     @Override
@@ -66,7 +73,7 @@ public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implement
         BeanDefinition foundBeanDefinition = getBeanDefinition(clazz)
                 .orElseThrow(() -> new NoSuchBeanDefinitionException("No bean definition of type " + clazz + " found"));
         if (foundBeanDefinition.isPrototype()) {
-            return instantiatePrototype(clazz, foundBeanDefinition);
+            return instantiatePrototype(foundBeanDefinition);
         }
         return singletonBeans.entrySet()
                 .stream()
@@ -78,13 +85,13 @@ public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implement
     }
 
     @SuppressWarnings("unchecked")
-    private <T> T instantiatePrototype(Class<T> clazz, BeanDefinition beanDefinition) {
+    private <T> T instantiatePrototype(BeanDefinition beanDefinition) {
         String beanName = beanDefinition.getBeanName();
         if (beanDefinition.getClassName() == null) {
             ObjectProvider objectProvider = beanDefinition.getObjectProvider();
             return (T) postProcessBeanInstance(objectProvider.makeObject(this), beanName);
         }
-        return (T) postProcessBeanInstance(objectFactory.instantiate(clazz, this), beanName);
+        return (T) postProcessBeanInstance(objectFactory.instantiate(beanDefinition.getRealBeanClass(), this), beanName);
     }
 
     private Object postProcessBeanInstance(Object beanInstance, String beanName) {

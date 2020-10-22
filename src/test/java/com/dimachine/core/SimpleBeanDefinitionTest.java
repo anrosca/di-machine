@@ -2,6 +2,8 @@ package com.dimachine.core;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Comparator;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class SimpleBeanDefinitionTest {
@@ -69,5 +71,35 @@ public class SimpleBeanDefinitionTest {
         String expectedStringRepresentation = "SimpleBeanDefinition{className='com.dimachine.core.SimpleBeanDefinition', " +
                 "beanName='simpleBeanDefinition', scope=SINGLETON}";
         assertEquals(expectedStringRepresentation, beanDefinition.toString());
+    }
+
+    @Test
+    public void shouldBeAbleToCheckCompatibilityByNameAndType() {
+        SimpleBeanDefinition beanDefinition = SimpleBeanDefinition.builder()
+                .className(SimpleBeanDefinition.class.getName())
+                .beanName("simpleBeanDefinition")
+                .build();
+
+        assertTrue(beanDefinition.isCompatibleWith("simpleBeanDefinition", BeanDefinition.class));
+    }
+
+    @Test
+    public void shouldTellThatBeanDefinitionsAreIncompatible_whenTheirNamedAreNotEqual() {
+        SimpleBeanDefinition beanDefinition = SimpleBeanDefinition.builder()
+                .className(SimpleBeanDefinition.class.getName())
+                .beanName("simpleBeanDefinition")
+                .build();
+
+        assertFalse(beanDefinition.isCompatibleWith("something", BeanDefinition.class));
+    }
+
+    @Test
+    public void shouldTellThatBeanDefinitionsAreIncompatible_whenTheirTypesAreNotAssignable() {
+        SimpleBeanDefinition beanDefinition = SimpleBeanDefinition.builder()
+                .className(SimpleBeanDefinition.class.getName())
+                .beanName("simpleBeanDefinition")
+                .build();
+
+        assertFalse(beanDefinition.isCompatibleWith("simpleBeanDefinition", Comparator.class));
     }
 }

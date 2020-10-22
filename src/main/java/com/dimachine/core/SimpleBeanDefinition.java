@@ -66,6 +66,11 @@ public class SimpleBeanDefinition implements BeanDefinition {
     }
 
     @Override
+    public boolean isCompatibleWith(String beanName, Class<?> clazz) {
+        return getBeanName().equals(beanName) && clazz.isAssignableFrom(getBeanAssignableClass());
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
