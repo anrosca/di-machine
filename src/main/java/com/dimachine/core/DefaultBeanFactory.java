@@ -4,6 +4,7 @@ import com.dimachine.core.annotation.Component;
 import com.dimachine.core.annotation.Configuration;
 import com.dimachine.core.annotation.Ordered;
 import com.dimachine.core.annotation.Service;
+import com.dimachine.core.locator.ComponentPackageLocator;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -173,13 +174,21 @@ public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implement
     @Override
     public void refresh() {
         loadFactories();
-        BeanDefinition[] beanDefinitions = scanClasspath().stream()
+        BeanDefinition[] beanDefinitions = scanClasspath(findPackagesToScan()).stream()
                 .map(beanDefinitionMaker::makeBeanDefinition)
                 .toArray(BeanDefinition[]::new);
         registerBeans(beanDefinitions);
         registerBeanFactory();
         instantiateSingletonBeans();
         invokeBeanPostProcessors();
+    }
+
+    private List<String> findPackagesToScan() {
+        ComponentPackageLocator locator = new ComponentPackageLocator();
+        List<? extends Class<?>> classesToScan = beanDefinitions.stream()
+                .map(BeanDefinition::getRealBeanClass)
+                .collect(Collectors.toList());
+        return locator.locate(classesToScan);
     }
 
     private void loadFactories() {
@@ -196,8 +205,8 @@ public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implement
         singletonBeans.put(beanDefinition, this);
     }
 
-    protected List<String> scanClasspath() {
-        return classpathScanner.scan();
+    protected List<String> scanClasspath(List<String> additionalPackages) {
+        return classpathScanner.scan(additionalPackages);
     }
 
     private void invokeBeanPostProcessors() {

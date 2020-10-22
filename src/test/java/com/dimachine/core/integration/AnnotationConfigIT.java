@@ -3,6 +3,7 @@ package com.dimachine.core.integration;
 import com.dimachine.core.BeanScope;
 import com.dimachine.core.DefaultBeanFactory;
 import com.dimachine.core.annotation.Bean;
+import com.dimachine.core.annotation.ComponentScan;
 import com.dimachine.core.annotation.Configuration;
 import com.dimachine.core.annotation.Scope;
 import org.junit.jupiter.api.Test;
@@ -58,6 +59,23 @@ public class AnnotationConfigIT {
         }
     }
 
+    @Test
+    public void shouldBeAbleToScanPackagesViaComponentScanning() throws Exception {
+        TestBean bean;
+        try (DefaultBeanFactory beanFactory = new DefaultBeanFactory()) {
+            beanFactory.register(ComponentScanningConfig.class);
+            beanFactory.refresh();
+
+            bean = beanFactory.getBean("testBean", TestBean.class);
+            assertTrue(bean.initMethodWasCalled());
+            assertNotNull(bean.getAutowiredField());
+            assertNotNull(bean.getAutowireList());
+            assertNotNull(bean.getAutowireMap());
+        }
+        assertTrue(bean.destroyMethodWasCalled());
+        assertTrue(bean.annotatedDestroyMethodWasCalled());
+    }
+
     @Configuration
     public static class AppConfiguration {
 
@@ -100,5 +118,10 @@ public class AnnotationConfigIT {
         public FooService fooService() {
             return new FooService();
         }
+    }
+
+    @Configuration
+    @ComponentScan("test")
+    public static class ComponentScanningConfig {
     }
 }
