@@ -58,6 +58,34 @@ public class DefaultBeanFactoryTest {
     }
 
     @Test
+    public void shouldBeAbleToFindPrototypeBeanByName_whenItIsPresentInBeanFactory() {
+        BeanDefinition prototypeDefinition = SimpleBeanDefinition.builder()
+                .className(TargetBean.class.getName())
+                .beanAssignableClass(TargetBean.class)
+                .beanName("targetBean")
+                .scope(BeanScope.PROTOTYPE)
+                .build();
+        beanFactory.registerBeans(prototypeDefinition);
+        beanFactory.refresh();
+
+        assertTrue(beanFactory.contains("targetBean"));
+    }
+
+    @Test
+    public void shouldBeAbleToFindPrototypeBeanByType_whenItIsPresentInBeanFactory() {
+        BeanDefinition prototypeDefinition = SimpleBeanDefinition.builder()
+                .className(TargetBean.class.getName())
+                .beanAssignableClass(TargetBean.class)
+                .beanName("targetBean")
+                .scope(BeanScope.PROTOTYPE)
+                .build();
+        beanFactory.registerBeans(prototypeDefinition);
+        beanFactory.refresh();
+
+        assertTrue(beanFactory.contains(TargetBean.class));
+    }
+
+    @Test
     public void shouldBeAbleToFindBeanByType_whenItIsPresentInBeanFactory() {
         beanFactory.registerBeans(beanDefinition);
         beanFactory.refresh();
@@ -113,8 +141,8 @@ public class DefaultBeanFactoryTest {
         assertNotNull(secondPrototype);
         assertEquals(TargetBean.class, firstPrototype.getClass());
         assertEquals(TargetBean.class, secondPrototype.getClass());
-        assertFalse(beanFactory.contains(firstPrototype.getClass()));
-        assertFalse(beanFactory.contains(secondPrototype.getClass()));
+        assertFalse(beanFactory.containsSingleton(firstPrototype.getClass()));
+        assertFalse(beanFactory.containsSingleton(secondPrototype.getClass()));
         assertNotSame(firstPrototype, secondPrototype);
     }
 
@@ -225,6 +253,32 @@ public class DefaultBeanFactoryTest {
 
         AppConfig config = beanFactory.getBean(AppConfig.class);
         assertNotNull(config);
+    }
+
+    @Test
+    public void shouldBeAbleToCheckIfBeanFactoryContainsGivenSingletonBean() {
+        SimpleBeanDefinition singletonBeanDefinition = SimpleBeanDefinition.builder()
+                .className(TargetBean.class.getName())
+                .beanName("testBean")
+                .scope(BeanScope.SINGLETON)
+                .build();
+        beanFactory.registerBeans(singletonBeanDefinition);
+        beanFactory.refresh();
+
+        assertTrue(beanFactory.containsSingleton(TargetBean.class));
+    }
+
+    @Test
+    public void whenGivenAPrototypeBean_containsSingletonShouldReturnFalse() {
+        SimpleBeanDefinition singletonBeanDefinition = SimpleBeanDefinition.builder()
+                .className(TargetBean.class.getName())
+                .beanName("testBean")
+                .scope(BeanScope.PROTOTYPE)
+                .build();
+        beanFactory.registerBeans(singletonBeanDefinition);
+        beanFactory.refresh();
+
+        assertFalse(beanFactory.containsSingleton(TargetBean.class));
     }
 
     @Configuration

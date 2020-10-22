@@ -1,6 +1,6 @@
 package com.dimachine.core;
 
-public final class DefaultBeanDefinitionMaker implements BeanDefinitionMaker {
+public class DefaultBeanDefinitionMaker implements BeanDefinitionMaker {
     private final BeanNamer beanNamer = new DefaultBeanNamer();
     private final ScopeResolver scopeResolver = new ScopeResolver();
 

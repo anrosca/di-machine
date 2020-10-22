@@ -13,7 +13,7 @@ After that, you'll be able to add the following maven dependency to your project
 
 ```xml
      <dependency>
-          <groupId>org.example</groupId>
+          <groupId>org.dimachine</groupId>
           <artifactId>di-machine</artifactId>
           <version>1.0-SNAPSHOT</version>
     </dependency>

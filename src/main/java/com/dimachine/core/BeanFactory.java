@@ -9,13 +9,15 @@ public interface BeanFactory extends AutoCloseable {
 
     Object getBean(String name);
 
-    <T> T getBean(String name, Class<T> clazz);
+    <T> T getBean(String name, Class<T> beanClass);
 
-    <T> T getBean(Class<T> clazz);
+    <T> T getBean(Class<T> beanClass);
 
     boolean contains(String name);
 
-    <T> boolean contains(Class<T> clazz);
+    <T> boolean contains(Class<T> beanClass);
+
+    <T> boolean containsSingleton(Class<T> singletonClass);
 
     void registerSingleton(BeanDefinition beanDefinition, Object instance);
 
