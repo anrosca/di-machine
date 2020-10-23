@@ -5,14 +5,18 @@ import com.dimachine.core.annotation.Configuration;
 import com.dimachine.core.annotation.Ordered;
 import com.dimachine.core.annotation.Service;
 import com.dimachine.core.locator.ComponentPackageLocator;
+import com.dimachine.core.locator.ComponentTraits;
+import com.dimachine.core.type.ClassMetadata;
 
+import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implements BeanFactory, BeanDefinitionRegistry {
-    private static final List<Class<?>> targetAnnotations = List.of(Component.class, Service.class, Configuration.class);
+    private static final List<Class<? extends Annotation>> targetAnnotations =
+            List.of(Component.class, Service.class, Configuration.class);
 
     private final Map<BeanDefinition, Object> singletonBeans = new ConcurrentHashMap<>();
     private final DefaultObjectFactory objectFactory = new DefaultObjectFactory();
@@ -183,7 +187,7 @@ public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implement
         invokeBeanPostProcessors();
     }
 
-    private List<String> findPackagesToScan() {
+    private ComponentTraits findPackagesToScan() {
         ComponentPackageLocator locator = new ComponentPackageLocator();
         List<? extends Class<?>> classesToScan = beanDefinitions.stream()
                 .map(BeanDefinition::getRealBeanClass)
@@ -205,8 +209,16 @@ public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implement
         singletonBeans.put(beanDefinition, this);
     }
 
-    protected List<String> scanClasspath(List<String> additionalPackages) {
-        return classpathScanner.scan(additionalPackages);
+    protected List<String> scanClasspath(ComponentTraits componentTraits) {
+        List<String> additionalPackages = componentTraits.getComponentPackages()
+                .stream()
+                .distinct()
+                .collect(Collectors.toList());
+        return classpathScanner.scan(additionalPackages)
+                .stream()
+                .filter(classMetadata -> componentTraits.getComponentFilter().matches(classMetadata))
+                .map(ClassMetadata::getClassName)
+                .collect(Collectors.toList());
     }
 
     private void invokeBeanPostProcessors() {

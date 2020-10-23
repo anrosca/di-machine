@@ -3,23 +3,25 @@ package com.dimachine.core.locator;
 import com.dimachine.core.annotation.ComponentScan;
 import com.dimachine.core.annotation.ComponentScans;
 
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public class ComponentPackageLocator {
 
-    public List<String> locate(List<? extends Class<?>> classesToScan) {
-        Set<String> packagesToScan = new HashSet<>();
+    private final ComponentTraitsFactory componentTraitsFactory = new ComponentTraitsFactory();
+
+    public ComponentTraits locate(List<? extends Class<?>> classesToScan) {
+        OrComponentFilterCombiner combinedFilter = new OrComponentFilterCombiner();
+        ComponentTraits allTraits = new ComponentTraits(new ArrayList<>(), combinedFilter);
         for (Class<?> configClass : classesToScan) {
             ComponentScan[] annotations = readComponentScanAnnotations(configClass);
             for (ComponentScan componentScan : annotations) {
-                packagesToScan.addAll(getPackagesToScanFrom(componentScan));
+                ComponentTraits newTrait = componentTraitsFactory.from(componentScan);
+                allTraits.addTrait(newTrait);
+                combinedFilter.combineWith(newTrait.getComponentFilter());
             }
         }
-        return List.copyOf(packagesToScan);
+        return allTraits;
     }
 
     private ComponentScan[] readComponentScanAnnotations(Class<?> configClass) {
@@ -29,19 +31,5 @@ public class ComponentPackageLocator {
             return configClass.getAnnotation(ComponentScans.class).value();
         }
         return new ComponentScan[0];
-    }
-
-    private Set<String> getPackagesToScanFrom(ComponentScan componentScan) {
-        Set<String> packagesToScan = new HashSet<>();
-        packagesToScan.addAll(Arrays.asList(componentScan.basePackages()));
-        packagesToScan.addAll(Arrays.asList(componentScan.value()));
-        packagesToScan.addAll(getTypeSafeBasePackages(componentScan.basePackageClasses()));
-        return packagesToScan;
-    }
-
-    private List<String> getTypeSafeBasePackages(Class<?>[] basePackageClasses) {
-        return Arrays.stream(basePackageClasses)
-                .map(Class::getPackageName)
-                .collect(Collectors.toList());
     }
 }

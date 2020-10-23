@@ -2,6 +2,7 @@ package com.dimachine.core;
 
 import com.dimachine.core.annotation.Configuration;
 import com.dimachine.core.annotation.PreDestroy;
+import com.dimachine.core.locator.ComponentTraits;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +22,7 @@ public class DefaultBeanFactoryTest {
     public void setUp() {
         beanFactory = new DefaultBeanFactory(new String[]{}) {
             @Override
-            protected List<String> scanClasspath(List<String> additionalPackages) {
+            protected List<String> scanClasspath(ComponentTraits additionalPackages) {
                 return Collections.emptyList();
             }
         };

@@ -2,13 +2,12 @@ package com.dimachine.core.integration;
 
 import com.dimachine.core.BeanScope;
 import com.dimachine.core.DefaultBeanFactory;
-import com.dimachine.core.annotation.Bean;
-import com.dimachine.core.annotation.ComponentScan;
-import com.dimachine.core.annotation.Configuration;
-import com.dimachine.core.annotation.Scope;
+import com.dimachine.core.annotation.*;
+import filtering.test.FilteredComponent;
 import org.junit.jupiter.api.Test;
 import test.FooService;
 import test.TestBean;
+import filtering.test.WantedBean;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -76,6 +75,17 @@ public class AnnotationConfigIT {
         assertTrue(bean.annotatedDestroyMethodWasCalled());
     }
 
+    @Test
+    public void shouldBeAbleToScanPackagesViaComponentScanningFiltering() throws Exception {
+        try (DefaultBeanFactory beanFactory = new DefaultBeanFactory()) {
+            beanFactory.register(ComponentScanningFilteringConfig.class);
+            beanFactory.refresh();
+
+            FilteredComponent bean = beanFactory.getBean(FilteredComponent.class);
+            assertNotNull(bean);
+        }
+    }
+
     @Configuration
     public static class AppConfiguration {
 
@@ -123,5 +133,11 @@ public class AnnotationConfigIT {
     @Configuration
     @ComponentScan("test")
     public static class ComponentScanningConfig {
+    }
+
+    @Configuration
+    @ComponentScan(basePackages = "filtering.test",
+            includeFilters = @ComponentScan.Filter(type = FilterType.ANNOTATION, classes = WantedBean.class))
+    public static class ComponentScanningFilteringConfig {
     }
 }
