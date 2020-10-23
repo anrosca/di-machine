@@ -12,4 +12,14 @@ public @interface ComponentScan {
     String[] basePackages() default {};
 
     Class<?>[] basePackageClasses() default {};
+
+    ComponentScan.Filter[] includeFilters() default {};
+
+    @interface Filter {
+        Class<?>[] classes() default {};
+
+        FilterType type();
+
+        String[] pattern() default {};
+    }
 }

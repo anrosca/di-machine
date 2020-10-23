@@ -1,6 +1,7 @@
 package com.dimachine.core;
 
 import com.dimachine.core.annotation.Ordered;
+import com.dimachine.core.locator.ComponentTraits;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,7 @@ public class BeanPostProcessorOrderTest {
     public void setUp() {
         beanFactory = new DefaultBeanFactory(new String[] {}) {
             @Override
-            protected List<String> scanClasspath(List<String> additionalPackages) {
+            protected List<String> scanClasspath(ComponentTraits additionalPackages) {
                 return Collections.emptyList();
             }
         };
