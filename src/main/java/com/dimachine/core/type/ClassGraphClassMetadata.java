@@ -39,4 +39,14 @@ public class ClassGraphClassMetadata implements ClassMetadata {
                 .map(ClassGraphAnnotationMetadata::new)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public boolean isSubclassOf(String className) {
+        boolean isSubclass = classInfo.implementsInterface(className);
+        ClassInfo superclass = classInfo;
+        while ((superclass = superclass.getSuperclass()) != null) {
+            isSubclass |= superclass.getName().equals(className);
+        }
+        return isSubclass;
+    }
 }

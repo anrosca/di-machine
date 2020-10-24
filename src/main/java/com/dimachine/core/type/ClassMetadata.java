@@ -13,4 +13,6 @@ public interface ClassMetadata {
     boolean isFinal();
 
     List<AnnotationMetadata> getAnnotations();
+
+    boolean isSubclassOf(String className);
 }
