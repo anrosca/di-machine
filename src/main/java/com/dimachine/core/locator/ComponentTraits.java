@@ -6,16 +6,15 @@ import java.util.List;
 
 public class ComponentTraits {
     private final List<String> componentPackages;
-    private final ComponentFilter componentFilter;
+    private final OrComponentFilterCombiner componentFilter = new OrComponentFilterCombiner();
 
     public ComponentTraits(List<String> componentPackages, ComponentFilter componentFilter) {
         this.componentPackages = new ArrayList<>(componentPackages);
-        this.componentFilter = componentFilter;
+        this.componentFilter.combineWith(componentFilter);
     }
 
     public ComponentTraits(List<String> componentPackages) {
         this.componentPackages = new ArrayList<>(componentPackages);
-        this.componentFilter = new NoOpComponentFilter();
     }
 
     public List<String> getComponentPackages() {
@@ -28,6 +27,7 @@ public class ComponentTraits {
 
     public void addTrait(ComponentTraits newTraits) {
         componentPackages.addAll(newTraits.getComponentPackages());
+        componentFilter.combineWith(newTraits.getComponentFilter());
     }
 
     @Override
@@ -51,8 +51,8 @@ public class ComponentTraits {
     @Override
     public String toString() {
         return "ComponentTraits{" +
-                "componentPackages=" + componentPackages +
-                ", componentFilter=" + componentFilter +
+                "packages=" + componentPackages +
+                ", filter=" + componentFilter +
                 '}';
     }
 }

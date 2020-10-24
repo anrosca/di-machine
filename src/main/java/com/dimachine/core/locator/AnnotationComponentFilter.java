@@ -8,7 +8,7 @@ import java.util.Arrays;
 public class AnnotationComponentFilter implements ComponentFilter {
     private final Class<?>[] targetAnnotations;
 
-    public AnnotationComponentFilter(Class<?>[] targetAnnotations) {
+    public AnnotationComponentFilter(Class<?>...targetAnnotations) {
         if (!isAnnotationsOnly(targetAnnotations)) {
             throw new IllegalArgumentException(Arrays.toString(targetAnnotations) +
                     " was expected to contain only annotation types.");
