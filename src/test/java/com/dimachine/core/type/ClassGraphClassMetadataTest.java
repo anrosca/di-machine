@@ -1,12 +1,16 @@
 package com.dimachine.core.type;
 
 import io.github.classgraph.ClassInfo;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Supplier;
 
 import static com.dimachine.core.type.ClassGraphUtil.makeClassInfo;
+import static com.dimachine.core.type.ClassGraphUtil.makeClassInfoImplementing;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -42,5 +46,21 @@ public class ClassGraphClassMetadataTest {
         ClassMetadata classMetadata = new ClassGraphClassMetadata(classInfo);
 
         assertTrue(classMetadata.isInterface());
+    }
+
+    @Test
+    public void shouldBeAbleToTellIfGivenClassImplementsInterface() {
+        ClassInfo classInfo = makeClassInfoImplementing(ArrayList.class, List.class);
+        ClassMetadata classMetadata = new ClassGraphClassMetadata(classInfo);
+
+        assertTrue(classMetadata.isSubclassOf("java.util.List"));
+    }
+
+    @Test
+    public void shouldBeAbleToTellIfGivenClassExtendsAnotherClass() {
+        ClassInfo classInfo = makeClassInfoImplementing(ArrayList.class, AbstractList.class);
+        ClassMetadata classMetadata = new ClassGraphClassMetadata(classInfo);
+
+        assertTrue(classMetadata.isSubclassOf("java.util.AbstractList"));
     }
 }

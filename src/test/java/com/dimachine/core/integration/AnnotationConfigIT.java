@@ -3,11 +3,15 @@ package com.dimachine.core.integration;
 import com.dimachine.core.BeanScope;
 import com.dimachine.core.DefaultBeanFactory;
 import com.dimachine.core.annotation.*;
+import filtering.test.AssignableTypeComponent;
 import filtering.test.FilteredComponent;
 import org.junit.jupiter.api.Test;
 import test.FooService;
 import test.TestBean;
 import filtering.test.WantedBean;
+
+import java.io.Serializable;
+import java.util.AbstractList;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -86,6 +90,17 @@ public class AnnotationConfigIT {
         }
     }
 
+    @Test
+    public void shouldBeAbleToScanPackagesViaComponentScanningWithAssignableTypeFiltering() throws Exception {
+        try (DefaultBeanFactory beanFactory = new DefaultBeanFactory()) {
+            beanFactory.register(ComponentScanningAssignableTypeFilteringConfig.class);
+            beanFactory.refresh();
+
+            AssignableTypeComponent bean = beanFactory.getBean(AssignableTypeComponent.class);
+            assertNotNull(bean);
+        }
+    }
+
     @Configuration
     public static class AppConfiguration {
 
@@ -139,5 +154,11 @@ public class AnnotationConfigIT {
     @ComponentScan(basePackages = "filtering.test",
             includeFilters = @ComponentScan.Filter(type = FilterType.ANNOTATION, classes = WantedBean.class))
     public static class ComponentScanningFilteringConfig {
+    }
+
+    @Configuration
+    @ComponentScan(basePackages = "filtering.test",
+            includeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {Serializable.class, AbstractList.class}))
+    public static class ComponentScanningAssignableTypeFilteringConfig {
     }
 }
