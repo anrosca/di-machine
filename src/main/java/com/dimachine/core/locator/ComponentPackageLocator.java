@@ -11,14 +11,12 @@ public class ComponentPackageLocator {
     private final ComponentTraitsFactory componentTraitsFactory = new ComponentTraitsFactory();
 
     public ComponentTraits locate(List<? extends Class<?>> classesToScan) {
-        OrComponentFilterCombiner combinedFilter = new OrComponentFilterCombiner();
-        ComponentTraits allTraits = new ComponentTraits(new ArrayList<>(), combinedFilter);
+        ComponentTraits allTraits = new ComponentTraits(new ArrayList<>());
         for (Class<?> configClass : classesToScan) {
             ComponentScan[] annotations = readComponentScanAnnotations(configClass);
             for (ComponentScan componentScan : annotations) {
                 ComponentTraits newTrait = componentTraitsFactory.from(componentScan);
                 allTraits.addTrait(newTrait);
-                combinedFilter.combineWith(newTrait.getComponentFilter());
             }
         }
         return allTraits;

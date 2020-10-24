@@ -9,7 +9,7 @@ public class OrComponentFilterCombiner implements ComponentFilter {
     private final List<ComponentFilter> componentFilters;
 
     public OrComponentFilterCombiner(List<ComponentFilter> componentFilters) {
-        this.componentFilters = componentFilters;
+        this.componentFilters = new ArrayList<>(componentFilters);
     }
 
     public OrComponentFilterCombiner() {
@@ -33,5 +33,20 @@ public class OrComponentFilterCombiner implements ComponentFilter {
 
     public void combineWith(ComponentFilter componentFilter) {
         componentFilters.add(componentFilter);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        OrComponentFilterCombiner that = (OrComponentFilterCombiner) o;
+
+        return componentFilters.equals(that.componentFilters);
+    }
+
+    @Override
+    public int hashCode() {
+        return componentFilters.hashCode();
     }
 }
