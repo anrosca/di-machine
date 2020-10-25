@@ -67,22 +67,22 @@ public class ComponentTraitsFactoryTest {
         assertTrue(componentTraits.getComponentFilter().matches(makeClassMetadataWithClassName("java.lang.String")));
     }
 
-    private ClassMetadata makeClassMetadataWithClassName(String className) {
-        ClassMetadata classMetadata = mock(ClassMetadata.class);
-        when(classMetadata.getClassName()).thenReturn(className);
-        return classMetadata;
-    }
-
     @Test
-    public void shouldDefaultToNoOpFilter_whenReadingAnUnimplementedFilterType() {
+    public void shouldBeAbleToReadPackagesFromComponentScanAnnotationWithCustomFilter() {
         ComponentTraitsFactory traitsFactory = new ComponentTraitsFactory();
         ComponentScan componentScan =
-                ComponentScanWithValueAttributeAndUnimplementedAnnotationFilter.class.getAnnotation(ComponentScan.class);
+                ComponentScanWithValueAttributeAndCustomFilter.class.getAnnotation(ComponentScan.class);
 
         ComponentTraits componentTraits = traitsFactory.from(componentScan);
 
         assertEquals(List.of("java.lang"), componentTraits.getComponentPackages());
-        assertTrue(componentTraits.getComponentFilter().matches(mock(ClassMetadata.class)));
+        assertTrue(componentTraits.getComponentFilter().matches(makeClassMetadataWithClassName("java.lang.String")));
+    }
+
+    private ClassMetadata makeClassMetadataWithClassName(String className) {
+        ClassMetadata classMetadata = mock(ClassMetadata.class);
+        when(classMetadata.getClassName()).thenReturn(className);
+        return classMetadata;
     }
 
     private ClassMetadata makeAnnotatedClassMetadata() {
@@ -124,7 +124,15 @@ public class ComponentTraitsFactoryTest {
     }
 
     @ComponentScan(basePackages = "java.lang",
-            includeFilters = @ComponentScan.Filter(type = FilterType.CUSTOM, classes = {}))
-    private static class ComponentScanWithValueAttributeAndUnimplementedAnnotationFilter {
+            includeFilters = @ComponentScan.Filter(type = FilterType.CUSTOM, classes = StringClassTypeFilter.class))
+    private static class ComponentScanWithValueAttributeAndCustomFilter {
+    }
+
+    private static class StringClassTypeFilter implements TypeFilter {
+
+        @Override
+        public boolean match(MetadataReader metadataReader) {
+            return metadataReader.getClassMetadata().getClassName().equals("java.lang.String");
+        }
     }
 }
