@@ -2,10 +2,11 @@ package com.dimachine.core;
 
 import com.dimachine.core.annotation.Component;
 import com.dimachine.core.annotation.Configuration;
-import com.dimachine.core.annotation.Ordered;
 import com.dimachine.core.annotation.Service;
+import com.dimachine.core.locator.ComponentFilter;
 import com.dimachine.core.locator.ComponentPackageLocator;
 import com.dimachine.core.locator.ComponentTraits;
+import com.dimachine.core.postprocessor.BeanPostProcessorOrderedComparator;
 import com.dimachine.core.type.ClassMetadata;
 
 import java.lang.annotation.Annotation;
@@ -210,14 +211,18 @@ public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implement
     }
 
     protected List<String> scanClasspath(ComponentTraits componentTraits) {
-        List<String> additionalPackages = componentTraits.getComponentPackages()
+        ComponentFilter componentFilter = componentTraits.getComponentFilter();
+        return classpathScanner.scan(getAdditionalPackages(componentTraits))
+                .stream()
+                .filter(componentFilter::matches)
+                .map(ClassMetadata::getClassName)
+                .collect(Collectors.toList());
+    }
+
+    private List<String> getAdditionalPackages(ComponentTraits componentTraits) {
+        return componentTraits.getComponentPackages()
                 .stream()
                 .distinct()
-                .collect(Collectors.toList());
-        return classpathScanner.scan(additionalPackages)
-                .stream()
-                .filter(classMetadata -> componentTraits.getComponentFilter().matches(classMetadata))
-                .map(ClassMetadata::getClassName)
                 .collect(Collectors.toList());
     }
 
@@ -244,22 +249,6 @@ public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implement
         singletonBeans.clear();
         beanDefinitions.clear();
         beanNames.clear();
-    }
-
-    private static class BeanPostProcessorOrderedComparator implements Comparator<BeanPostProcessor> {
-        @Override
-        public int compare(BeanPostProcessor first, BeanPostProcessor second) {
-            return Integer.compare(getOrder(first), getOrder(second));
-        }
-
-        private int getOrder(BeanPostProcessor processor) {
-            Class<?> processorClass = processor.getClass();
-            if (processorClass.isAnnotationPresent(Ordered.class)) {
-                Ordered ordered = processorClass.getAnnotation(Ordered.class);
-                return ordered.value().getPrecedence();
-            }
-            return Order.DEFAULT_PRECEDENCE.getPrecedence();
-        }
     }
 
     private void postProcessBeforeInitialisation() {
