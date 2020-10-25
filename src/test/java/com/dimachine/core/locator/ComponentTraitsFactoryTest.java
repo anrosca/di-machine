@@ -56,6 +56,24 @@ public class ComponentTraitsFactoryTest {
     }
 
     @Test
+    public void shouldBeAbleToReadPackagesFromComponentScanAnnotationWithRegExFilter() {
+        ComponentTraitsFactory traitsFactory = new ComponentTraitsFactory();
+        ComponentScan componentScan =
+                ComponentScanWithValueAttributeAndRegExFilter.class.getAnnotation(ComponentScan.class);
+
+        ComponentTraits componentTraits = traitsFactory.from(componentScan);
+
+        assertEquals(List.of("java.lang"), componentTraits.getComponentPackages());
+        assertTrue(componentTraits.getComponentFilter().matches(makeClassMetadataWithClassName("java.lang.String")));
+    }
+
+    private ClassMetadata makeClassMetadataWithClassName(String className) {
+        ClassMetadata classMetadata = mock(ClassMetadata.class);
+        when(classMetadata.getClassName()).thenReturn(className);
+        return classMetadata;
+    }
+
+    @Test
     public void shouldDefaultToNoOpFilter_whenReadingAnUnimplementedFilterType() {
         ComponentTraitsFactory traitsFactory = new ComponentTraitsFactory();
         ComponentScan componentScan =
@@ -101,7 +119,12 @@ public class ComponentTraitsFactoryTest {
     }
 
     @ComponentScan(basePackages = "java.lang",
-            includeFilters = @ComponentScan.Filter(type = FilterType.REGEX, pattern = ""))
+            includeFilters = @ComponentScan.Filter(type = FilterType.REGEX, pattern = ".*[ng]"))
+    private static class ComponentScanWithValueAttributeAndRegExFilter {
+    }
+
+    @ComponentScan(basePackages = "java.lang",
+            includeFilters = @ComponentScan.Filter(type = FilterType.CUSTOM, classes = {}))
     private static class ComponentScanWithValueAttributeAndUnimplementedAnnotationFilter {
     }
 }

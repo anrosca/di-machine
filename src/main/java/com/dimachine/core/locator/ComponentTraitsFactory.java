@@ -38,6 +38,9 @@ public class ComponentTraitsFactory {
     }
 
     private ComponentFilter makeFilterFrom(ComponentScan.Filter filter) {
+        if (filter.type() == FilterType.REGEX) {
+            return new RegExComponentFilter(filter.pattern());
+        }
         return componentFilters.getOrDefault(filter.type(), (classes) -> new NoOpComponentFilter())
                 .apply(filter.classes());
     }
