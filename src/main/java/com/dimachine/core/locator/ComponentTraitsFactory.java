@@ -13,6 +13,7 @@ public class ComponentTraitsFactory {
     static {
         componentFilters.put(FilterType.ANNOTATION, AnnotationComponentFilter::new);
         componentFilters.put(FilterType.ASSIGNABLE_TYPE, AssignableTypeComponentFilter::new);
+        componentFilters.put(FilterType.CUSTOM, CustomComponentFilter::new);
     }
 
     public ComponentTraits from(ComponentScan componentScan) {

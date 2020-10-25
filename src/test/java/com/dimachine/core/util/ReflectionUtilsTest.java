@@ -4,13 +4,10 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ReflectionUtilsTest {
 
@@ -68,6 +65,19 @@ public class ReflectionUtilsTest {
         Method method = ReflectionUtils.getMethod(instance.getClass(), "init");
 
         assertThrows(RuntimeException.class, () -> ReflectionUtils.invokeMethod(instance, method));
+    }
+
+    @Test
+    public void shouldBeAbleToInstantiateClassUsingNoArgsConstructor() {
+        Object instance = ReflectionUtils.makeInstance(ArrayList.class);
+
+        assertNotNull(instance);
+        assertEquals(instance.getClass(), ArrayList.class);
+    }
+
+    @Test
+    public void shouldWrapInRuntimeException_whenInstanceCreationFails() {
+        assertThrows(RuntimeException.class, () -> ReflectionUtils.makeInstance(AbstractList.class));
     }
 
     private static class TestObject {

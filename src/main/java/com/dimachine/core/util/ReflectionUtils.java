@@ -1,5 +1,8 @@
 package com.dimachine.core.util;
 
+import com.dimachine.core.locator.TypeFilter;
+
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -49,5 +52,15 @@ public class ReflectionUtils {
             methods.addAll(Arrays.asList(clazz.getDeclaredMethods()));
         } while ((clazz = clazz.getSuperclass()) != null);
         return methods;
+    }
+
+    public static Object makeInstance(Class<?> clazz) {
+        try {
+            Constructor<?> constructor = clazz.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            return constructor.newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

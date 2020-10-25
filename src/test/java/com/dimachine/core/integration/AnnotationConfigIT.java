@@ -3,6 +3,8 @@ package com.dimachine.core.integration;
 import com.dimachine.core.BeanScope;
 import com.dimachine.core.DefaultBeanFactory;
 import com.dimachine.core.annotation.*;
+import com.dimachine.core.locator.MetadataReader;
+import com.dimachine.core.locator.TypeFilter;
 import filtering.test.AssignableTypeComponent;
 import filtering.test.FilteredComponent;
 import filtering.test.RegExMatchingComponent;
@@ -113,6 +115,17 @@ public class AnnotationConfigIT {
         }
     }
 
+    @Test
+    public void shouldBeAbleToScanPackagesViaComponentScanningWithCustomFiltering() throws Exception {
+        try (DefaultBeanFactory beanFactory = new DefaultBeanFactory()) {
+            beanFactory.register(ComponentScanningWithCustomFilterConfig.class);
+            beanFactory.refresh();
+
+            FilteredComponent bean = beanFactory.getBean(FilteredComponent.class);
+            assertNotNull(bean);
+        }
+    }
+
     @Configuration
     public static class AppConfiguration {
 
@@ -178,5 +191,19 @@ public class AnnotationConfigIT {
     @ComponentScan(basePackages = "filtering.test",
             includeFilters = @ComponentScan.Filter(type = FilterType.REGEX, pattern = ".*RegEx.*"))
     public static class ComponentScanningRegExFilteringConfig {
+    }
+
+    @Configuration
+    @ComponentScan(basePackages = "filtering.test",
+            includeFilters = @ComponentScan.Filter(type = FilterType.CUSTOM, classes = CustomFilterType.class))
+    public static class ComponentScanningWithCustomFilterConfig {
+    }
+
+    private static class CustomFilterType implements TypeFilter {
+
+        @Override
+        public boolean match(MetadataReader metadataReader) {
+            return metadataReader.getClassMetadata().getClassName().contains("FilteredComponent");
+        }
     }
 }
