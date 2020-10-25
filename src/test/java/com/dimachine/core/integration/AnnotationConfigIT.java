@@ -5,10 +5,11 @@ import com.dimachine.core.DefaultBeanFactory;
 import com.dimachine.core.annotation.*;
 import filtering.test.AssignableTypeComponent;
 import filtering.test.FilteredComponent;
+import filtering.test.RegExMatchingComponent;
+import filtering.test.WantedBean;
 import org.junit.jupiter.api.Test;
 import test.FooService;
 import test.TestBean;
-import filtering.test.WantedBean;
 
 import java.io.Serializable;
 import java.util.AbstractList;
@@ -101,6 +102,17 @@ public class AnnotationConfigIT {
         }
     }
 
+    @Test
+    public void shouldBeAbleToScanPackagesViaComponentScanningWithRegExFiltering() throws Exception {
+        try (DefaultBeanFactory beanFactory = new DefaultBeanFactory()) {
+            beanFactory.register(ComponentScanningRegExFilteringConfig.class);
+            beanFactory.refresh();
+
+            RegExMatchingComponent bean = beanFactory.getBean(RegExMatchingComponent.class);
+            assertNotNull(bean);
+        }
+    }
+
     @Configuration
     public static class AppConfiguration {
 
@@ -160,5 +172,11 @@ public class AnnotationConfigIT {
     @ComponentScan(basePackages = "filtering.test",
             includeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {Serializable.class, AbstractList.class}))
     public static class ComponentScanningAssignableTypeFilteringConfig {
+    }
+
+    @Configuration
+    @ComponentScan(basePackages = "filtering.test",
+            includeFilters = @ComponentScan.Filter(type = FilterType.REGEX, pattern = ".*RegEx.*"))
+    public static class ComponentScanningRegExFilteringConfig {
     }
 }
