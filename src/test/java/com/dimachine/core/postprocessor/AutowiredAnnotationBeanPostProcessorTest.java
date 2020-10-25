@@ -143,12 +143,12 @@ public class AutowiredAnnotationBeanPostProcessorTest {
     }
 
     @Test
-    public void whenAutowiringMapWithNonStringKeyType_shouldThrowFieldInjectionFailedException() {
+    public void whenAutowiringMapWithNonStringKeyType_shouldThrowBeanInitialisationException() {
         Map<String, FooService> expectedDependencies = Map.of("fooService", new FooService(), "yetAnotherFooService", new YetAnotherFooService());
         when(beanFactory.getBeansMapOfType(FooService.class)).thenReturn(expectedDependencies);
         AutowireMapWithWrongKeyBarService bean = new AutowireMapWithWrongKeyBarService();
 
-        assertThrows(FieldInjectionFailedException.class, () -> postProcessor.postProcessBeforeInitialisation(bean, "testBean"));
+        assertThrows(BeanInitialisationException.class, () -> postProcessor.postProcessBeforeInitialisation(bean, "testBean"));
     }
 
     @Test

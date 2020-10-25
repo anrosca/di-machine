@@ -52,6 +52,34 @@ public class AnnotationConfigIT {
     }
 
     @Test
+    public void shouldBeAbleToGetPrototypeBeansWithSingletonDependenciesViaJavaConfiguration() throws Exception {
+        TestBean bean;
+        try (DefaultBeanFactory beanFactory = new DefaultBeanFactory(PrototypeWithSingletonDependenciesConfig.class)) {
+            beanFactory.refresh();
+
+            bean = beanFactory.getBean(TestBean.class);
+            assertTrue(bean.initMethodWasCalled());
+            assertNotNull(bean.getAutowiredField());
+            assertNotNull(bean.getAutowireList());
+            assertNotNull(bean.getAutowireMap());
+        }
+    }
+
+    @Test
+    public void shouldBeAbleToGetPrototypeBeansWithPrototypeDependenciesViaJavaConfiguration() throws Exception {
+        TestBean bean;
+        try (DefaultBeanFactory beanFactory = new DefaultBeanFactory(PrototypeWithPrototypeDependenciesConfig.class)) {
+            beanFactory.refresh();
+
+            bean = beanFactory.getBean(TestBean.class);
+            assertTrue(bean.initMethodWasCalled());
+            assertNotNull(bean.getAutowiredField());
+            assertNotNull(bean.getAutowireList());
+            assertNotNull(bean.getAutowireMap());
+        }
+    }
+
+    @Test
     public void shouldBeAbleToInjectPrototypeBeansInSingletonsViaJavaConfiguration() throws Exception {
         TestBean bean;
         try (DefaultBeanFactory beanFactory = new DefaultBeanFactory(InjectPrototypeIntoSingletonAppConfig.class)) {
@@ -149,6 +177,35 @@ public class AnnotationConfigIT {
             return new TestBean(new FooService());
         }
 
+        @Bean
+        public FooService fooService() {
+            return new FooService();
+        }
+    }
+
+    @Configuration
+    public static class PrototypeWithSingletonDependenciesConfig {
+        @Scope(BeanScope.PROTOTYPE)
+        @Bean
+        public TestBean prototypeTestBean(FooService fooService) {
+            return new TestBean(fooService);
+        }
+
+        @Bean
+        public FooService fooService() {
+            return new FooService();
+        }
+    }
+
+    @Configuration
+    public static class PrototypeWithPrototypeDependenciesConfig {
+        @Scope(BeanScope.PROTOTYPE)
+        @Bean
+        public TestBean prototypeTestBean(FooService fooService) {
+            return new TestBean(fooService);
+        }
+
+        @Scope(BeanScope.PROTOTYPE)
         @Bean
         public FooService fooService() {
             return new FooService();

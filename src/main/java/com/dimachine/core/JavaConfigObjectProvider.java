@@ -24,10 +24,13 @@ public class JavaConfigObjectProvider implements ObjectProvider {
             if (method.isAnnotationPresent(Bean.class)) {
                 BeanDefinition currentBeanDefinition = beanDefinitionScanner.makeBeanDefinition(method);
                 if (currentBeanDefinition.equals(beanDefinition)) {
-                    return ReflectionUtils.invokeMethod(configClassInstance, method);
+                    BeanParameterResolver parameterResolver = new BeanParameterResolver(beanFactory);
+                    return ReflectionUtils.invokeMethod(configClassInstance, method, parameterResolver.resolve(method));
                 }
             }
         }
-        throw new BeanInitialisationException("");
+        throw new BeanInitialisationException("Bean with name " + beanDefinition.getBeanName() +
+                " with class " + beanDefinition.getBeanAssignableClass() +
+                " could not be instantiated. @Bean method missing.");
     }
 }
