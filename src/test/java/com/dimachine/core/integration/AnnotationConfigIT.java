@@ -1,5 +1,6 @@
 package com.dimachine.core.integration;
 
+import com.dimachine.core.BeanCurrentlyInCreationException;
 import com.dimachine.core.BeanScope;
 import com.dimachine.core.DefaultBeanFactory;
 import com.dimachine.core.annotation.*;
@@ -16,8 +17,7 @@ import test.TestBean;
 import java.io.Serializable;
 import java.util.AbstractList;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class AnnotationConfigIT {
 
@@ -154,6 +154,18 @@ public class AnnotationConfigIT {
         }
     }
 
+    @Test
+    public void shouldThrow_whenThereAreCyclicPrototypeBeans() throws Exception {
+        try (DefaultBeanFactory beanFactory = new DefaultBeanFactory()) {
+            beanFactory.register(PrototypeWithCyclesConfig.class);
+            beanFactory.refresh();
+
+            Exception exception = assertThrows(BeanCurrentlyInCreationException.class, () -> beanFactory.getBean(TestBean.class));
+            assertEquals("Cyclic dependency between bean with name 'prototypeTestBean' and type " +
+                    "class test.TestBean and bean with name 'fooService' with type class test.FooService", exception.getMessage());
+        }
+    }
+
     @Configuration
     public static class AppConfiguration {
 
@@ -208,6 +220,21 @@ public class AnnotationConfigIT {
         @Scope(BeanScope.PROTOTYPE)
         @Bean
         public FooService fooService() {
+            return new FooService();
+        }
+    }
+
+    @Configuration
+    public static class PrototypeWithCyclesConfig {
+        @Scope(BeanScope.PROTOTYPE)
+        @Bean
+        public TestBean prototypeTestBean(FooService fooService) {
+            return new TestBean(fooService);
+        }
+
+        @Scope(BeanScope.PROTOTYPE)
+        @Bean
+        public FooService fooService(TestBean testBean) {
             return new FooService();
         }
     }
