@@ -1,16 +1,14 @@
 package com.dimachine.core;
 
 import com.dimachine.core.postprocessor.SetterInjectionFailedException;
-import com.dimachine.core.util.CollectionFactory;
+import com.dimachine.core.util.CollectionUtils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class BeanParameterResolver {
     private final BeanFactory beanFactory;
@@ -25,10 +23,10 @@ public class BeanParameterResolver {
     }
 
     public Object resolve(Object bean, Field field) {
-        if (isCollection(field.getType())) {
+        if (CollectionUtils.isCollection(field.getType())) {
             return resolveCollectionFieldValue(bean, field);
         }
-        if (isMap(field.getType())) {
+        if (CollectionUtils.isMap(field.getType())) {
             return resolveMapFieldValue(bean, field);
         }
         return beanFactory.getBean(field.getType());
@@ -66,10 +64,10 @@ public class BeanParameterResolver {
     }
 
     private Object revolveParameterValue(Class<?> parameterType, Method method) {
-        if (isCollection(parameterType)) {
+        if (CollectionUtils.isCollection(parameterType)) {
             return resolveCollectionMethodParameterValue(parameterType, method);
         }
-        if (isMap(parameterType)) {
+        if (CollectionUtils.isMap(parameterType)) {
             return resolveMapMethodParameterValue(parameterType, method);
         }
         return beanFactory.getBean(parameterType);
@@ -105,7 +103,7 @@ public class BeanParameterResolver {
 
     private Object convertMapToType(Class<?> dependencyClass, Class<?> mapType) {
         Map<String, ?> beansMapOfType = beanFactory.getBeansMapOfType(dependencyClass);
-        Map<Object, Object> resultingMap = CollectionFactory.newMapOfType(mapType);
+        Map<Object, Object> resultingMap = CollectionUtils.newMapOfType(mapType);
         resultingMap.putAll(beansMapOfType);
         return resultingMap;
     }
@@ -131,7 +129,7 @@ public class BeanParameterResolver {
     }
 
     private Collection<?> convertCollectionToType(Class<?> dependencyClass, Class<?> collectionType) {
-        Collection<Object> collection = CollectionFactory.newCollectionOfType(collectionType);
+        Collection<Object> collection = CollectionUtils.newCollectionOfType(collectionType);
         collection.addAll(beanFactory.getAllBeansOfType(dependencyClass));
         return collection;
     }
@@ -147,13 +145,4 @@ public class BeanParameterResolver {
     private boolean isWildcardType(String dependencyTypeName) {
         return dependencyTypeName.contains("?");
     }
-
-    private boolean isCollection(Class<?> type) {
-        return List.class.isAssignableFrom(type) || Set.class.isAssignableFrom(type);
-    }
-
-    private boolean isMap(Class<?> type) {
-        return Map.class.isAssignableFrom(type);
-    }
-
 }

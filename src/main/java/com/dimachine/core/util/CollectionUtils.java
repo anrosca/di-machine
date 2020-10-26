@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
-public class CollectionFactory {
+public class CollectionUtils {
     private static final Map<Class<?>, Supplier<Collection<?>>> collectionSuppliers = new HashMap<>();
     private static final Map<Class<?>, Supplier<Map<?, ?>>> mapSuppliers = new HashMap<>();
 
@@ -29,5 +29,13 @@ public class CollectionFactory {
         return (Map<K, V>) Optional.ofNullable(mapSuppliers.get(collectionType))
                 .map(Supplier::get)
                 .orElseThrow(() -> new UnsupportedCollectionException(collectionType + " is an unsupported map type"));
+    }
+
+    public static boolean isCollection(Class<?> type) {
+        return List.class.isAssignableFrom(type) || Set.class.isAssignableFrom(type) || Queue.class.isAssignableFrom(type);
+    }
+
+    public static  boolean isMap(Class<?> type) {
+        return Map.class.isAssignableFrom(type);
     }
 }

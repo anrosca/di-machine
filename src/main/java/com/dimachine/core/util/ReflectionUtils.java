@@ -1,7 +1,5 @@
 package com.dimachine.core.util;
 
-import com.dimachine.core.locator.TypeFilter;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
