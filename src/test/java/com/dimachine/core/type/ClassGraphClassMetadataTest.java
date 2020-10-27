@@ -63,4 +63,12 @@ public class ClassGraphClassMetadataTest {
 
         assertTrue(classMetadata.isSubclassOf("java.util.AbstractList"));
     }
+
+    @Test
+    public void aGivenClassShouldBeConsideredAssignableToItself() {
+        ClassInfo classInfo = makeClassInfo(ArrayList.class);
+        ClassMetadata classMetadata = new ClassGraphClassMetadata(classInfo);
+
+        assertTrue(classMetadata.isSubclassOf("java.util.ArrayList"));
+    }
 }

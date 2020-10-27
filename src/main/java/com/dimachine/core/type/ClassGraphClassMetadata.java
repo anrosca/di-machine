@@ -42,6 +42,8 @@ public class ClassGraphClassMetadata implements ClassMetadata {
 
     @Override
     public boolean isSubclassOf(String className) {
+        if (className.equals(classInfo.getName()))
+            return true;
         boolean isSubclass = classInfo.implementsInterface(className);
         ClassInfo superclass = classInfo;
         while ((superclass = superclass.getSuperclass()) != null) {
