@@ -35,6 +35,10 @@ public class OrComponentFilterCombiner implements ComponentFilter {
         componentFilters.add(componentFilter);
     }
 
+    public void combineWith(List<ComponentFilter> additionalFilters) {
+        componentFilters.addAll(additionalFilters);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
