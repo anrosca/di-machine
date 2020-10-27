@@ -3,13 +3,14 @@ package com.dimachine.core.integration;
 import com.dimachine.core.BeanCurrentlyInCreationException;
 import com.dimachine.core.BeanScope;
 import com.dimachine.core.DefaultBeanFactory;
+import com.dimachine.core.NoSuchBeanDefinitionException;
 import com.dimachine.core.annotation.*;
 import com.dimachine.core.locator.MetadataReader;
 import com.dimachine.core.locator.TypeFilter;
-import filtering.test.AssignableTypeComponent;
-import filtering.test.FilteredComponent;
-import filtering.test.RegExMatchingComponent;
-import filtering.test.WantedBean;
+import exclude.filtering.test.ExcludedComponent;
+import exclude.filtering.test.IterableComponent;
+import exclude.filtering.test.UnwantedBean;
+import include.filtering.test.*;
 import org.junit.jupiter.api.Test;
 import test.FooService;
 import test.TestBean;
@@ -155,6 +156,29 @@ public class AnnotationConfigIT {
     }
 
     @Test
+    public void shouldBeAbleToExcludeComponentsViaComponentScanningWithAnnotationExcludeFilter() throws Exception {
+        try (DefaultBeanFactory beanFactory = new DefaultBeanFactory()) {
+            beanFactory.register(ComponentScanWithAnnotationExcludeFilterConfig.class);
+            beanFactory.refresh();
+
+            assertFalse(beanFactory.contains(ExcludedComponent.class));
+            assertThrows(NoSuchBeanDefinitionException.class, () -> beanFactory.getBean(ExcludedComponent.class));
+        }
+    }
+
+    @Test
+    public void shouldBeAbleToExcludeComponentsViaComponentScanningWithAssignableTypeExcludeFilter() throws Exception {
+        try (DefaultBeanFactory beanFactory = new DefaultBeanFactory()) {
+            beanFactory.register(ComponentScanWithAssignableTypeExcludeFilterConfig.class);
+            beanFactory.refresh();
+
+            assertFalse(beanFactory.contains(IterableComponent.class));
+            assertTrue(beanFactory.contains(ExcludedComponent.class));
+            assertThrows(NoSuchBeanDefinitionException.class, () -> beanFactory.getBean(IterableComponent.class));
+        }
+    }
+
+    @Test
     public void shouldThrow_whenThereAreCyclicPrototypeBeans() throws Exception {
         try (DefaultBeanFactory beanFactory = new DefaultBeanFactory()) {
             beanFactory.register(PrototypeWithCyclesConfig.class);
@@ -260,27 +284,39 @@ public class AnnotationConfigIT {
     }
 
     @Configuration
-    @ComponentScan(basePackages = "filtering.test",
+    @ComponentScan(basePackages = "include.filtering.test",
             includeFilters = @ComponentScan.Filter(type = FilterType.ANNOTATION, classes = WantedBean.class))
     public static class ComponentScanningFilteringConfig {
     }
 
     @Configuration
-    @ComponentScan(basePackages = "filtering.test",
+    @ComponentScan(basePackages = "include.filtering.test",
             includeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {Serializable.class, AbstractList.class}))
     public static class ComponentScanningAssignableTypeFilteringConfig {
     }
 
     @Configuration
-    @ComponentScan(basePackages = "filtering.test",
+    @ComponentScan(basePackages = "include.filtering.test",
             includeFilters = @ComponentScan.Filter(type = FilterType.REGEX, pattern = ".*RegEx.*"))
     public static class ComponentScanningRegExFilteringConfig {
     }
 
     @Configuration
-    @ComponentScan(basePackages = "filtering.test",
+    @ComponentScan(basePackages = "include.filtering.test",
             includeFilters = @ComponentScan.Filter(type = FilterType.CUSTOM, classes = CustomFilterType.class))
     public static class ComponentScanningWithCustomFilterConfig {
+    }
+
+    @Configuration
+    @ComponentScan(basePackages = "exclude.filtering.test",
+            excludeFilters = @ComponentScan.Filter(type = FilterType.ANNOTATION, classes = UnwantedBean.class))
+    public static class ComponentScanWithAnnotationExcludeFilterConfig {
+    }
+
+    @Configuration
+    @ComponentScan(basePackages = "exclude.filtering.test",
+            excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = IterableComponent.class))
+    public static class ComponentScanWithAssignableTypeExcludeFilterConfig {
     }
 
     private static class CustomFilterType implements TypeFilter {

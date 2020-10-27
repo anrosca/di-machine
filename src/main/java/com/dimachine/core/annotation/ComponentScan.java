@@ -15,6 +15,8 @@ public @interface ComponentScan {
 
     ComponentScan.Filter[] includeFilters() default {};
 
+    ComponentScan.Filter[] excludeFilters() default {};
+
     @interface Filter {
         Class<?>[] classes() default {};
 

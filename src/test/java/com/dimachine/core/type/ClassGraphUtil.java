@@ -14,7 +14,9 @@ public class ClassGraphUtil {
             Constructor<ClassInfo> constructor =
                     ClassInfo.class.getDeclaredConstructor(String.class, int.class, Resource.class);
             constructor.setAccessible(true);
-            return constructor.newInstance(clazz.getName(), clazz.getModifiers(), null);
+            ClassInfo classInfoSpy = spy(constructor.newInstance(clazz.getName(), clazz.getModifiers(), null));
+            doReturn(clazz.getName()).when(classInfoSpy).getName();
+            return classInfoSpy;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -22,17 +24,16 @@ public class ClassGraphUtil {
 
     public static ClassInfo makeClassInfoImplementing(Class<?> clazz, Class<?> implementedInterface) {
         try {
-            Constructor<ClassInfo> constructor =
-                    ClassInfo.class.getDeclaredConstructor(String.class, int.class, Resource.class);
-            constructor.setAccessible(true);
-            ClassInfo classInfo = mock(ClassInfo.class);
+            ClassInfo classInfo = makeClassInfo(clazz);
             if (implementedInterface.isInterface()) {
-                when(classInfo.implementsInterface(implementedInterface.getName())).thenReturn(true);
+                doReturn(true).when(classInfo).implementsInterface(implementedInterface.getName());
             } else {
-                when(classInfo.getSuperclass())
-                        .thenReturn(makeClassInfo(implementedInterface))
-                        .thenReturn(null);
-                when(classInfo.getName()).thenReturn(clazz.getName());
+                int[] invocationCount = new int[1];
+                doAnswer(invocationOnMock -> {
+                    if (++invocationCount[0] > 1)
+                        return null;
+                    return makeClassInfo(implementedInterface);
+                }).when(classInfo).getSuperclass();
             }
             return classInfo;
         } catch (Exception e) {

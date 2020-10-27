@@ -1,8 +1,8 @@
-package filtering.test;
+package exclude.filtering.test;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.RUNTIME)
-public @interface WantedBean {
+public @interface UnwantedBean {
 }
