@@ -54,5 +54,22 @@ public class OrComponentFilterCombinerTest {
         filterCombiner.combineWith(filter);
 
         assertFalse(filterCombiner.matches(classMetadata));
+        verify(filter).matches(classMetadata);
+    }
+
+    @Test
+    public void shouldBeAbleToBatchCombineFilters() {
+        OrComponentFilterCombiner filterCombiner = new OrComponentFilterCombiner();
+        ClassMetadata classMetadata = mock(ClassMetadata.class);
+        ComponentFilter rejectingFilter = mock(ComponentFilter.class);
+        ComponentFilter acceptingFilter = mock(ComponentFilter.class);
+        when(rejectingFilter.matches(classMetadata)).thenReturn(false);
+        when(acceptingFilter.matches(classMetadata)).thenReturn(true);
+
+        filterCombiner.combineWith(List.of(rejectingFilter, acceptingFilter));
+
+        assertTrue(filterCombiner.matches(classMetadata));
+        verify(rejectingFilter).matches(classMetadata);
+        verify(acceptingFilter).matches(classMetadata);
     }
 }

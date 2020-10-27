@@ -27,8 +27,7 @@ public class ComponentTraitsFactory {
         ComponentScan.Filter[] excludeFilters = componentScan.excludeFilters();
         OrComponentFilterCombiner resultingFilter = new OrComponentFilterCombiner();
         if (includeFilters.length > 0) {
-            OrComponentFilterCombiner includeFilter = new OrComponentFilterCombiner(makeComponentFilters(includeFilters));
-            resultingFilter.combineWith(includeFilter);
+            resultingFilter.combineWith(makeComponentFilters(includeFilters));
         }
         if (excludeFilters.length > 0) {
             ComponentFilter excludeFilter = new NegateComponentFilter(new OrComponentFilterCombiner(makeComponentFilters(excludeFilters)));
