@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class BeanPostProcessorOrderTest {
     private static List<String> beansPostProcessorInvocationOrder = new ArrayList<>();
@@ -28,6 +27,11 @@ public class BeanPostProcessorOrderTest {
             @Override
             protected List<String> scanClasspath(ComponentTraits additionalPackages) {
                 return Collections.emptyList();
+            }
+
+            @Override
+            protected void loadFactories() {
+                //Disable default BeanPostProcessors (like AutowiredAnnotationBeanPostProcessor) loading
             }
         };
     }
@@ -51,14 +55,14 @@ public class BeanPostProcessorOrderTest {
                 .className(HighestOrderBeanPostProcessor.class.getName())
                 .beanName("highestOrderBeanPostProcessor")
                 .build();
-        beanFactory.registerBeans(highestBPP, lowestBPP, mediumBPP, beanDefinition);
+        beanFactory.registerBeans(highestBPP, lowestBPP, mediumBPP);
 
         beanFactory.refresh();
 
-        TargetBean bean = beanFactory.getBean(TargetBean.class);
-        assertNotNull(bean);
-        assertEquals(bean.getClass(), TargetBean.class);
-        assertEquals(List.of("high()", "medium()", "low()"), beansPostProcessorInvocationOrder);
+        assertEquals(List.of("high()", "medium()", "low()"), beansPostProcessorInvocationOrder.subList(0, 3));
+        assertEquals(List.of("high()", "medium()", "low()"), beansPostProcessorInvocationOrder.subList(3, 6));
+        assertEquals(List.of("high()", "medium()", "low()"), beansPostProcessorInvocationOrder.subList(6, 9));
+        assertEquals(List.of("high()", "medium()", "low()"), beansPostProcessorInvocationOrder.subList(9, 12));
     }
 
     @Ordered(Order.HIGHEST_PRECEDENCE)

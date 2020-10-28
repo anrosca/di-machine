@@ -39,6 +39,15 @@ public class AnnotationConfigIT {
     }
 
     @Test
+    public void shouldBeAbleToAutowireFieldsInBeanPostProcessors() throws Exception {
+        DefaultBeanFactory beanFactory = new DefaultBeanFactory(ComponentScanningConfig.class);
+        beanFactory.refresh();
+
+        ComponentScanningConfig bean = beanFactory.getBean(ComponentScanningConfig.class);
+        assertNotNull(bean.testBean);
+    }
+
+    @Test
     public void shouldBeAbleToGetPrototypeBeansViaJavaConfiguration() throws Exception {
         TestBean bean;
         try (DefaultBeanFactory beanFactory = new DefaultBeanFactory(PrototypeAppConfig.class)) {
@@ -281,6 +290,8 @@ public class AnnotationConfigIT {
     @Configuration
     @ComponentScan("test")
     public static class ComponentScanningConfig {
+        @Autowired
+        TestBean testBean;
     }
 
     @Configuration
