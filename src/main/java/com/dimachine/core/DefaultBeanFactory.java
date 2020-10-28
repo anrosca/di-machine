@@ -196,7 +196,7 @@ public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implement
         return locator.locate(classesToScan);
     }
 
-    private void loadFactories() {
+    protected void loadFactories() {
         DiMachineFactoriesLoader factoriesLoader = new DiMachineFactoriesLoader();
         factoriesLoader.load().forEach(this::registerBeans);
     }
@@ -261,9 +261,7 @@ public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implement
 
     private Object postProcessBeanBeforeInitialisation(Object bean, String beanName) {
         for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
-            if (!isBeanPostProcessor(bean)) {
-                bean = beanPostProcessor.postProcessBeforeInitialisation(bean, beanName);
-            }
+            bean = beanPostProcessor.postProcessBeforeInitialisation(bean, beanName);
         }
         return bean;
     }
@@ -278,9 +276,7 @@ public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implement
 
     private Object postProcessBeanAfterInitialisation(Object bean, String beanName) {
         for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
-            if (!isBeanPostProcessor(bean)) {
-                bean = beanPostProcessor.postProcessAfterInitialisation(bean, beanName);
-            }
+            bean = beanPostProcessor.postProcessAfterInitialisation(bean, beanName);
         }
         return bean;
     }
