@@ -1,11 +1,14 @@
 package com.dimachine.core;
 
+import java.util.List;
+
 public class SimpleBeanDefinition implements BeanDefinition {
     private final String className;
     private final String beanName;
     private final BeanScope scope;
     private final Class<?> beanAssignableClass;
     private ObjectProvider objectProvider;
+    private final List<String> aliases;
 
     private SimpleBeanDefinition(SimpleBeanDefinitionBuilder builder) {
         this.className = builder.className;
@@ -13,6 +16,7 @@ public class SimpleBeanDefinition implements BeanDefinition {
         this.scope = builder.scope;
         this.beanAssignableClass = builder.beanAssignableClass;
         this.objectProvider = builder.objectProvider;
+        this.aliases = builder.aliases;
     }
 
     @Override
@@ -67,7 +71,17 @@ public class SimpleBeanDefinition implements BeanDefinition {
 
     @Override
     public boolean isCompatibleWith(String beanName, Class<?> clazz) {
-        return getBeanName().equals(beanName) && clazz.isAssignableFrom(getBeanAssignableClass());
+        return isCompatibleWith(beanName) && clazz.isAssignableFrom(getBeanAssignableClass());
+    }
+
+    @Override
+    public List<String> getAliases() {
+        return aliases;
+    }
+
+    @Override
+    public boolean isCompatibleWith(String beanName) {
+        return this.beanName.equals(beanName) || aliases.contains(beanName);
     }
 
     @Override
@@ -109,6 +123,7 @@ public class SimpleBeanDefinition implements BeanDefinition {
         private BeanScope scope = BeanScope.SINGLETON;
         private Class<?> beanAssignableClass;
         public ObjectProvider objectProvider;
+        public List<String> aliases = List.of();
 
         public SimpleBeanDefinitionBuilder className(String className) {
             this.className = className;
@@ -132,6 +147,11 @@ public class SimpleBeanDefinition implements BeanDefinition {
 
         public SimpleBeanDefinitionBuilder objectProvider(ObjectProvider objectProvider) {
             this.objectProvider = objectProvider;
+            return this;
+        }
+
+        public SimpleBeanDefinitionBuilder aliases(List<String> aliases) {
+            this.aliases = aliases;
             return this;
         }
 

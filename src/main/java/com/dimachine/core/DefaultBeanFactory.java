@@ -58,7 +58,7 @@ public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implement
         }
         return singletonBeans.entrySet()
                 .stream()
-                .filter(entry -> entry.getKey().getBeanName().equals(name))
+                .filter(entry -> foundBeanDefinition.isCompatibleWith(entry.getKey().getBeanName()))
                 .findFirst()
                 .map(Map.Entry::getValue)
                 .orElseThrow(() -> new NoSuchBeanDefinitionException("No bean with name " + name + " found"));
@@ -112,13 +112,13 @@ public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implement
                 .orElse(false);
     }
 
-    private Boolean contains(String beanName, BeanDefinition beanDefinition) {
+    private boolean contains(String beanName, BeanDefinition beanDefinition) {
         if (beanDefinition.isSingleton()) {
             return singletonBeans.entrySet()
                     .stream()
-                    .anyMatch(beanEntry -> beanName.equals(beanEntry.getKey().getBeanName()));
+                    .anyMatch(beanEntry -> beanDefinition.isCompatibleWith(beanEntry.getKey().getBeanName()));
         }
-        return beanName.equals(beanDefinition.getBeanName());
+        return beanDefinition.isCompatibleWith(beanName);
     }
 
     @Override

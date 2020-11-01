@@ -5,6 +5,7 @@ import com.dimachine.core.BeanScope;
 import com.dimachine.core.SimpleBeanDefinition;
 import com.dimachine.core.annotation.Bean;
 import com.dimachine.core.annotation.Configuration;
+import com.dimachine.core.annotation.Qualifier;
 import com.dimachine.core.annotation.Scope;
 import org.junit.jupiter.api.Test;
 
@@ -23,7 +24,7 @@ public class AnnotationBeanDefinitionScannerTest {
         List<BeanDefinition> beanDefinitions = beanDefinitionScanner.scanBeanDefinitionsFrom(AppConfig.class);
 
         assertEquals(Set.of(
-                SimpleBeanDefinition.builder().scope(BeanScope.SINGLETON).beanName("myBean").build(),
+                SimpleBeanDefinition.builder().scope(BeanScope.SINGLETON).beanName("myBean").aliases(List.of("my_bean")).build(),
                 SimpleBeanDefinition.builder().scope(BeanScope.PROTOTYPE).beanName("yetAnotherMyBean").build(),
                 SimpleBeanDefinition.builder().scope(BeanScope.SINGLETON).beanName("cool_bean").build()
         ), new HashSet<>(beanDefinitions));
@@ -31,6 +32,7 @@ public class AnnotationBeanDefinitionScannerTest {
 
     @Configuration
     public static class AppConfig {
+        @Qualifier("my_bean")
         @Bean
         public MyBean myBean() {
             return new MyBean();
@@ -48,6 +50,7 @@ public class AnnotationBeanDefinitionScannerTest {
             return new MyBean();
         }
 
+        @Qualifier
         @Bean
         private MyBean privateBean() {
             return new MyBean();

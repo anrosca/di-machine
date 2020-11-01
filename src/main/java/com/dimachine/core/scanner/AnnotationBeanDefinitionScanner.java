@@ -2,6 +2,7 @@ package com.dimachine.core.scanner;
 
 import com.dimachine.core.*;
 import com.dimachine.core.annotation.Bean;
+import com.dimachine.core.annotation.Qualifier;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -29,7 +30,19 @@ public class AnnotationBeanDefinitionScanner implements BeanDefinitionScanner {
                 .beanName(beanNamer.makeBeanName(method, bean))
                 .scope(scopeResolver.resolveScope(method))
                 .beanAssignableClass(method.getReturnType())
+                .aliases(makeBeanAliases(method))
                 .build();
+    }
+
+    private List<String> makeBeanAliases(Method method) {
+        if (method.isAnnotationPresent(Qualifier.class)) {
+            Qualifier qualifier = method.getAnnotation(Qualifier.class);
+            String alias = qualifier.value();
+            if (!alias.isEmpty()) {
+                return List.of(alias);
+            }
+        }
+        return List.of();
     }
 
     private boolean isBeanMethod(Method method) {
