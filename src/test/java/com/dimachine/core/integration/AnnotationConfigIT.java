@@ -39,6 +39,15 @@ public class AnnotationConfigIT {
     }
 
     @Test
+    public void shouldBeAbleToGetBeansViaQualifierName() throws Exception {
+        DefaultBeanFactory beanFactory = new DefaultBeanFactory(AppConfiguration.class);
+        beanFactory.refresh();
+
+        TestBean bean = (TestBean) beanFactory.getBean("test_bean_alias");
+        assertNotNull(bean);
+    }
+
+    @Test
     public void shouldBeAbleToAutowireFieldsInBeanPostProcessors() throws Exception {
         DefaultBeanFactory beanFactory = new DefaultBeanFactory(ComponentScanningConfig.class);
         beanFactory.refresh();
@@ -202,6 +211,7 @@ public class AnnotationConfigIT {
     @Configuration
     public static class AppConfiguration {
 
+        @Qualifier("test_bean_alias")
         @Bean
         public TestBean testBean(FooService fooService) {
             return new TestBean(fooService);

@@ -5,6 +5,7 @@ import com.dimachine.core.annotation.PreDestroy;
 import com.dimachine.core.locator.ComponentTraits;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import test.TestBean;
 
 import java.util.*;
 
@@ -70,6 +71,23 @@ public class DefaultBeanFactoryTest {
         beanFactory.refresh();
 
         assertTrue(beanFactory.contains("targetBean"));
+    }
+
+    @Test
+    public void shouldBeAbleToGetBeanByAlias() {
+        BeanDefinition prototypeDefinition = SimpleBeanDefinition.builder()
+                .className(TargetBean.class.getName())
+                .beanAssignableClass(TargetBean.class)
+                .beanName("targetBean")
+                .scope(BeanScope.SINGLETON)
+                .aliases(List.of("target_bean"))
+                .build();
+        beanFactory.registerBeans(prototypeDefinition);
+        beanFactory.refresh();
+
+        assertNotNull(beanFactory.getBean("target_bean"));
+        assertNotNull(beanFactory.getBean("target_bean", TargetBean.class));
+        assertTrue(beanFactory.contains("target_bean"));
     }
 
     @Test

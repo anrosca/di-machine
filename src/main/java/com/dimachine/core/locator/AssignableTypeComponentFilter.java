@@ -17,7 +17,7 @@ public class AssignableTypeComponentFilter implements ComponentFilter {
     public boolean matches(ClassMetadata classMetadata) {
         for (Class<?> clazz : targetClasses) {
             if (classMetadata.isSubclassOf(clazz.getName())) {
-                log.debug("Match found. Class: " + classMetadata.getClassName() + " is assignable from " + clazz.getName());
+                log.debug("Match found. Class: {} is assignable from {}", classMetadata.getClassName(), clazz.getName());
                 return true;
             }
         }

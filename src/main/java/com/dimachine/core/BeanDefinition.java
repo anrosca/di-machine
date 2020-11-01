@@ -1,5 +1,7 @@
 package com.dimachine.core;
 
+import java.util.List;
+
 public interface BeanDefinition {
     String getClassName();
 
@@ -20,4 +22,8 @@ public interface BeanDefinition {
     void setObjectProvider(ObjectProvider objectProvider);
 
     boolean isCompatibleWith(String beanName, Class<?> clazz);
+
+    List<String> getAliases();
+
+    boolean isCompatibleWith(String beanName);
 }

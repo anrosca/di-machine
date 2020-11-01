@@ -3,7 +3,7 @@ package com.dimachine.core;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public abstract class AbstractBeanDefinitionRegistry implements BeanDefinitionRegistry {
+public abstract class AbstractBeanDefinitionRegistry extends AbstractAliasRegistry implements BeanDefinitionRegistry {
     protected final Set<BeanDefinition> beanDefinitions = Collections.newSetFromMap(new ConcurrentHashMap<>());
     protected final Set<String> beanNames = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
@@ -40,7 +40,7 @@ public abstract class AbstractBeanDefinitionRegistry implements BeanDefinitionRe
     @Override
     public Optional<BeanDefinition> getBeanDefinition(String beanName) {
         return beanDefinitions.stream()
-                .filter(beanDefinition -> beanName.equals(beanDefinition.getBeanName()))
+                .filter(beanDefinition -> beanDefinition.isCompatibleWith(beanName))
                 .findFirst();
     }
 
