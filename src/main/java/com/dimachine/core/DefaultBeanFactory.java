@@ -128,7 +128,7 @@ public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implement
                 .orElse(false);
     }
 
-    private <T> Boolean contains(Class<T> clazz, BeanDefinition beanDefinition) {
+    private <T> boolean contains(Class<T> clazz, BeanDefinition beanDefinition) {
         if (beanDefinition.isSingleton()) {
             return containsSingleton(clazz);
         }
@@ -179,20 +179,25 @@ public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implement
     @Override
     public void refresh() {
         loadFactories();
-        BeanDefinition[] beanDefinitions = scanClasspath(findPackagesToScan()).stream()
-                .map(beanDefinitionMaker::makeBeanDefinition)
-                .toArray(BeanDefinition[]::new);
+        BeanDefinition[] beanDefinitions = scanBeanDefinitions();
         registerBeans(beanDefinitions);
         registerBeanFactory();
         instantiateSingletonBeans();
         invokeBeanPostProcessors();
     }
 
+    private BeanDefinition[] scanBeanDefinitions() {
+        return scanClasspath(findPackagesToScan())
+                .stream()
+                .map(beanDefinitionMaker::makeBeanDefinition)
+                .toArray(BeanDefinition[]::new);
+    }
+
     private ComponentTraits findPackagesToScan() {
-        ComponentPackageLocator locator = new ComponentPackageLocator();
         List<? extends Class<?>> classesToScan = beanDefinitions.stream()
                 .map(BeanDefinition::getRealBeanClass)
                 .collect(Collectors.toList());
+        ComponentPackageLocator locator = new ComponentPackageLocator();
         return locator.locate(classesToScan);
     }
 

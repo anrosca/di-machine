@@ -23,17 +23,16 @@ public class ComponentTraitsFactory {
     }
 
     private ComponentFilter makeComponentFilter(ComponentScan componentScan) {
-        ComponentScan.Filter[] includeFilters = componentScan.includeFilters();
-        ComponentScan.Filter[] excludeFilters = componentScan.excludeFilters();
-        OrComponentFilterCombiner resultingFilter = new OrComponentFilterCombiner();
-        if (includeFilters.length > 0) {
-            resultingFilter.combineWith(makeComponentFilters(includeFilters));
+        return new OrComponentFilterCombiner()
+                .combineWith(makeFilter(componentScan.includeFilters()))
+                .combineWith(makeFilter(componentScan.excludeFilters()).negate());
+    }
+
+    private ComponentFilter makeFilter(ComponentScan.Filter[] filters) {
+        if (filters.length > 0) {
+            return new OrComponentFilterCombiner(makeComponentFilters(filters));
         }
-        if (excludeFilters.length > 0) {
-            ComponentFilter excludeFilter = new NegateComponentFilter(new OrComponentFilterCombiner(makeComponentFilters(excludeFilters)));
-            resultingFilter.combineWith(excludeFilter);
-        }
-        return resultingFilter;
+        return new RejectingComponentFilter();
     }
 
     private List<ComponentFilter> makeComponentFilters(ComponentScan.Filter[] filters) {

@@ -31,8 +31,9 @@ public class OrComponentFilterCombiner implements ComponentFilter {
         return matchResult;
     }
 
-    public void combineWith(ComponentFilter componentFilter) {
+    public OrComponentFilterCombiner combineWith(ComponentFilter componentFilter) {
         componentFilters.add(componentFilter);
+        return this;
     }
 
     public void combineWith(List<ComponentFilter> additionalFilters) {
