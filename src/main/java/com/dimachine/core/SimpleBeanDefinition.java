@@ -1,6 +1,7 @@
 package com.dimachine.core;
 
 import java.util.List;
+import java.util.Objects;
 
 public class SimpleBeanDefinition implements BeanDefinition {
     private final String className;
@@ -91,7 +92,7 @@ public class SimpleBeanDefinition implements BeanDefinition {
 
         SimpleBeanDefinition that = (SimpleBeanDefinition) o;
 
-        if (className != null ? !className.equals(that.className) : that.className != null) return false;
+        if (!Objects.equals(className, that.className)) return false;
         if (!beanName.equals(that.beanName)) return false;
         return scope == that.scope;
     }

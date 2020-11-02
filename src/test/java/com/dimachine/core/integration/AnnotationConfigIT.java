@@ -197,6 +197,18 @@ public class AnnotationConfigIT {
     }
 
     @Test
+    public void shouldBeAbleToExcludeComponentsViaComponentScanningCombiningExcludeFilters() {
+        DefaultBeanFactory beanFactory = new DefaultBeanFactory();
+        beanFactory.register(ComponentScanWithCombinedExcludeFilterConfig.class);
+        beanFactory.refresh();
+
+        assertFalse(beanFactory.contains(IterableComponent.class));
+        assertFalse(beanFactory.contains(ExcludedComponent.class));
+        assertThrows(NoSuchBeanDefinitionException.class, () -> beanFactory.getBean(IterableComponent.class));
+        assertThrows(NoSuchBeanDefinitionException.class, () -> beanFactory.getBean(ExcludedComponent.class));
+    }
+
+    @Test
     public void shouldThrow_whenThereAreCyclicPrototypeBeans() throws Exception {
         try (DefaultBeanFactory beanFactory = new DefaultBeanFactory()) {
             beanFactory.register(PrototypeWithCyclesConfig.class);
@@ -338,6 +350,15 @@ public class AnnotationConfigIT {
     @ComponentScan(basePackages = "exclude.filtering.test",
             excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = IterableComponent.class))
     public static class ComponentScanWithAssignableTypeExcludeFilterConfig {
+    }
+
+    @Configuration
+    @ComponentScan(basePackages = "exclude.filtering.test",
+            excludeFilters = {
+                    @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = IterableComponent.class),
+                    @ComponentScan.Filter(type = FilterType.ANNOTATION, classes = UnwantedBean.class),
+            })
+    public static class ComponentScanWithCombinedExcludeFilterConfig {
     }
 
     private static class CustomFilterType implements TypeFilter {

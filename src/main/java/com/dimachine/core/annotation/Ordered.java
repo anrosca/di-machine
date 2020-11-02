@@ -4,6 +4,7 @@ import com.dimachine.core.Order;
 
 import java.lang.annotation.*;
 
+@Inherited
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
