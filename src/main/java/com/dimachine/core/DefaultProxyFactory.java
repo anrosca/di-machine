@@ -1,9 +1,12 @@
 package com.dimachine.core;
 
 import com.dimachine.core.util.ReflectionUtils;
+import net.sf.cglib.proxy.Callback;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
+import org.objenesis.Objenesis;
+import org.objenesis.ObjenesisStd;
 
 import java.lang.reflect.Method;
 import java.util.Set;
@@ -26,8 +29,12 @@ public class DefaultProxyFactory implements ProxyFactory {
         Enhancer enhancer = new Enhancer();
         enhancer.setSuperclass(beanInstance.getClass());
         enhancer.setInterfaces(new Class<?>[]{Proxy.class});
-        enhancer.setCallback(new ConfigurationClassInvocationHandler(beanInstance, beanFactory));
-        return enhancer.create();
+        enhancer.setCallbackType(MethodInterceptor.class);
+        Class<?> proxiedClass = enhancer.createClass();
+        Enhancer.registerCallbacks(proxiedClass, new Callback[]{new ConfigurationClassInvocationHandler(beanInstance, beanFactory)});
+        enhancer.setClassLoader(getClass().getClassLoader());
+        Objenesis objenesis = new ObjenesisStd();
+        return objenesis.newInstance(proxiedClass);
     }
 
     private static class ConfigurationClassInvocationHandler implements MethodInterceptor {
