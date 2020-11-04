@@ -8,12 +8,14 @@ import com.dimachine.core.concurrent.MethodExecutingRunnable;
 import com.dimachine.core.util.ReflectionUtils;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 public class ScheduledAnnotationBeanPostProcessor implements BeanPostProcessor, DisposableBean {
     private final Map<String, Object> scheduledBeans = new HashMap<>();
@@ -36,12 +38,27 @@ public class ScheduledAnnotationBeanPostProcessor implements BeanPostProcessor, 
         Class<?> beanClass = bean.getClass();
         for (Method method : ReflectionUtils.getDeclaredMethods(beanClass)) {
             if (method.isAnnotationPresent(Scheduled.class)) {
+                validateScheduledMethod(method);
                 scheduledBeans.put(beanName, bean);
                 initializeExecutorService();
                 break;
             }
         }
         return bean;
+    }
+
+    private void validateScheduledMethod(Method method) {
+        if (method.getParameterCount() != 0) {
+            throw new InvalidScheduledMethodException("Invalid @Scheduled method " + makePrettyMethodSignature(method)
+                    + ". @Scheduled methods should have no parameters");
+        }
+    }
+
+    private String makePrettyMethodSignature(Method method) {
+        String parameterList = Arrays.stream(method.getParameterTypes())
+                .map(Class::getSimpleName)
+                .collect(Collectors.joining(","));
+        return method.getDeclaringClass().getSimpleName() + "." + method.getName() + "(" + parameterList + ")";
     }
 
     @Override

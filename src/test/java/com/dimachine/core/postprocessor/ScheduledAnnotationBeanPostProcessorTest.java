@@ -18,6 +18,7 @@ public class ScheduledAnnotationBeanPostProcessorTest {
 
     private final ScheduledExecutorService executorService = mock(ScheduledExecutorService.class);
     private final BeanFactory beanFactory = mock(BeanFactory.class);
+    private final ScheduledAnnotationBeanPostProcessor beanPostProcessor = new ScheduledAnnotationBeanPostProcessor(beanFactory, executorService);
 
     @BeforeEach
     public void setUp() {
@@ -33,7 +34,6 @@ public class ScheduledAnnotationBeanPostProcessorTest {
         Object bean = new ScheduledBean();
         String beanName = "scheduledBean";
         when(beanFactory.getBean(beanName)).thenReturn(bean);
-        ScheduledAnnotationBeanPostProcessor beanPostProcessor = new ScheduledAnnotationBeanPostProcessor(beanFactory, executorService);
 
         beanPostProcessor.postProcessBeforeInitialisation(bean, beanName);
         beanPostProcessor.postProcessAfterInitialisation(bean, beanName);
@@ -46,7 +46,6 @@ public class ScheduledAnnotationBeanPostProcessorTest {
         Object bean = new NonScheduledBean();
         String beanName = "scheduledBean";
         when(beanFactory.getBean(beanName)).thenReturn(bean);
-        ScheduledAnnotationBeanPostProcessor beanPostProcessor = new ScheduledAnnotationBeanPostProcessor(beanFactory, executorService);
 
         beanPostProcessor.postProcessBeforeInitialisation(bean, beanName);
         beanPostProcessor.postProcessAfterInitialisation(bean, beanName);
@@ -57,8 +56,6 @@ public class ScheduledAnnotationBeanPostProcessorTest {
 
     @Test
     public void whenDisposingBeanPostProcessor_shouldShutdownExecutorService() throws InterruptedException {
-        ScheduledAnnotationBeanPostProcessor beanPostProcessor = new ScheduledAnnotationBeanPostProcessor(beanFactory, executorService);
-
         beanPostProcessor.destroy();
 
         verify(executorService).shutdown();
@@ -68,7 +65,6 @@ public class ScheduledAnnotationBeanPostProcessorTest {
 
     @Test
     public void whenDisposingBeanPostProcessorAndAwaitTerminationThrowsException_shouldShutdownExecutorServiceImmediately() throws InterruptedException {
-        ScheduledAnnotationBeanPostProcessor beanPostProcessor = new ScheduledAnnotationBeanPostProcessor(beanFactory, executorService);
         when(executorService.awaitTermination(anyLong(), any())).thenThrow(InterruptedException.class);
 
         beanPostProcessor.destroy();
@@ -80,7 +76,6 @@ public class ScheduledAnnotationBeanPostProcessorTest {
 
     @Test
     public void whenDisposingBeanPostProcessorAndAwaitTerminationReturnsGracefully_shouldStopDisposingBean() throws InterruptedException {
-        ScheduledAnnotationBeanPostProcessor beanPostProcessor = new ScheduledAnnotationBeanPostProcessor(beanFactory, executorService);
         when(executorService.awaitTermination(anyLong(), any())).thenReturn(true);
 
         beanPostProcessor.destroy();
@@ -88,6 +83,17 @@ public class ScheduledAnnotationBeanPostProcessorTest {
         verify(executorService).shutdown();
         verify(executorService).awaitTermination(anyLong(), any());
         verify(executorService, never()).shutdownNow();
+    }
+
+    @Test
+    public void shouldThrowInvalidScheduledMethodException_whenScheduledMethodHasParameters() {
+        Object bean = new InvalidScheduledBean();
+        String beanName = "scheduledBean";
+
+        InvalidScheduledMethodException exception =
+                assertThrows(InvalidScheduledMethodException.class, () -> beanPostProcessor.postProcessBeforeInitialisation(bean, beanName));
+        assertEquals("Invalid @Scheduled method InvalidScheduledBean.execute(String)." +
+                " @Scheduled methods should have no parameters", exception.getMessage());
     }
 
     private class ScheduledBean {
@@ -99,6 +105,13 @@ public class ScheduledAnnotationBeanPostProcessorTest {
 
     private static class NonScheduledBean {
         public void execute() {
+            fail("This method shouldn't have been executed");
+        }
+    }
+
+    private static class InvalidScheduledBean {
+        @Scheduled(initialDelay = 10)
+        public void execute(String name) {
             fail("This method shouldn't have been executed");
         }
     }
