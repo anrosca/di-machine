@@ -5,6 +5,7 @@ import com.dimachine.core.BeanPostProcessor;
 import com.dimachine.core.DisposableBean;
 import com.dimachine.core.annotation.Scheduled;
 import com.dimachine.core.concurrent.MethodExecutingRunnable;
+import com.dimachine.core.concurrent.MethodScheduler;
 import com.dimachine.core.util.ReflectionUtils;
 
 import java.lang.reflect.Method;
@@ -38,7 +39,6 @@ public class ScheduledAnnotationBeanPostProcessor implements BeanPostProcessor, 
         Class<?> beanClass = bean.getClass();
         for (Method method : ReflectionUtils.getDeclaredMethods(beanClass)) {
             if (method.isAnnotationPresent(Scheduled.class)) {
-                validateScheduledMethod(method);
                 scheduledBeans.put(beanName, bean);
                 initializeExecutorService();
                 break;
@@ -67,6 +67,7 @@ public class ScheduledAnnotationBeanPostProcessor implements BeanPostProcessor, 
             Class<?> beanClass = scheduledBeans.get(beanName).getClass();
             for (Method method : ReflectionUtils.getDeclaredMethods(beanClass)) {
                 if (method.isAnnotationPresent(Scheduled.class)) {
+                    validateScheduledMethod(method);
                     scheduleMethod(beanName, method);
                 }
             }
@@ -76,10 +77,21 @@ public class ScheduledAnnotationBeanPostProcessor implements BeanPostProcessor, 
 
     private void scheduleMethod(String beanName, Method method) {
         Scheduled scheduled = method.getAnnotation(Scheduled.class);
-        long initialDelay = scheduled.initialDelay();
-        long delay = scheduled.fixedRate();
+        SchedulingProperties schedulingProperties = makeSchedulingPropertiesFrom(scheduled);
         Runnable runnable = new MethodExecutingRunnable(method, beanName, beanFactory);
-        executorService.schedule(runnable, initialDelay, TimeUnit.MILLISECONDS);
+        doScheduleMethod(schedulingProperties, runnable);
+    }
+
+    private void doScheduleMethod(SchedulingProperties schedulingProperties, Runnable runnable) {
+        MethodScheduler methodScheduler = new MethodScheduler();
+        methodScheduler.schedule(runnable, executorService, schedulingProperties);
+    }
+
+    private SchedulingProperties makeSchedulingPropertiesFrom(Scheduled scheduled) {
+        return SchedulingProperties.builder()
+                .initialDelay(scheduled.initialDelay())
+                .fixedRate(scheduled.fixedRate())
+                .build();
     }
 
     @Override

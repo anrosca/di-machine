@@ -90,8 +90,9 @@ public class ScheduledAnnotationBeanPostProcessorTest {
         Object bean = new InvalidScheduledBean();
         String beanName = "scheduledBean";
 
+        beanPostProcessor.postProcessBeforeInitialisation(bean, beanName);
         InvalidScheduledMethodException exception =
-                assertThrows(InvalidScheduledMethodException.class, () -> beanPostProcessor.postProcessBeforeInitialisation(bean, beanName));
+                assertThrows(InvalidScheduledMethodException.class, () -> beanPostProcessor.postProcessAfterInitialisation(bean, beanName));
         assertEquals("Invalid @Scheduled method InvalidScheduledBean.execute(String)." +
                 " @Scheduled methods should have no parameters", exception.getMessage());
     }
