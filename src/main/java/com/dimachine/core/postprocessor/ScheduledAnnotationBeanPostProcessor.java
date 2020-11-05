@@ -6,6 +6,7 @@ import com.dimachine.core.DisposableBean;
 import com.dimachine.core.annotation.Scheduled;
 import com.dimachine.core.concurrent.MethodExecutingRunnable;
 import com.dimachine.core.concurrent.MethodScheduler;
+import com.dimachine.core.concurrent.SchedulingProperties;
 import com.dimachine.core.util.ReflectionUtils;
 
 import java.lang.reflect.Method;
@@ -91,6 +92,7 @@ public class ScheduledAnnotationBeanPostProcessor implements BeanPostProcessor, 
         return SchedulingProperties.builder()
                 .initialDelay(scheduled.initialDelay())
                 .fixedRate(scheduled.fixedRate())
+                .fixedDelay(scheduled.fixedDelay())
                 .build();
     }
 
