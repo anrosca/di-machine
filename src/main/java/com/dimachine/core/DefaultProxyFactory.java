@@ -1,15 +1,17 @@
 package com.dimachine.core;
 
 import com.dimachine.core.util.ReflectionUtils;
-import net.sf.cglib.proxy.Callback;
-import net.sf.cglib.proxy.Enhancer;
-import net.sf.cglib.proxy.MethodInterceptor;
-import net.sf.cglib.proxy.MethodProxy;
-import org.objenesis.Objenesis;
-import org.objenesis.ObjenesisStd;
+import javassist.util.proxy.MethodFilter;
+import javassist.util.proxy.MethodHandler;
+import javassist.util.proxy.Proxy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class DefaultProxyFactory implements ProxyFactory {
     private static final Set<String> bypassedMethods = Set.of(
@@ -24,39 +26,70 @@ public class DefaultProxyFactory implements ProxyFactory {
             "clone"
     );
 
+    private final ScopeResolver scopeResolver = new ScopeResolver();
+
     @Override
-    public Object proxyConfigurationClass(Object beanInstance, BeanDefinition beanDefinition, BeanFactory beanFactory) {
-        Enhancer enhancer = new Enhancer();
-        enhancer.setSuperclass(beanInstance.getClass());
-        enhancer.setInterfaces(new Class<?>[]{Proxy.class});
-        enhancer.setCallbackType(MethodInterceptor.class);
-        Class<?> proxiedClass = enhancer.createClass();
-        Enhancer.registerCallbacks(proxiedClass, new Callback[]{new ConfigurationClassInvocationHandler(beanInstance, beanFactory)});
-        enhancer.setClassLoader(getClass().getClassLoader());
-        Objenesis objenesis = new ObjenesisStd();
-        return objenesis.newInstance(proxiedClass);
+    public Object proxyConfigurationClass(Object beanInstance, BeanFactory beanFactory) {
+        javassist.util.proxy.ProxyFactory proxyFactory = new javassist.util.proxy.ProxyFactory();
+        proxyFactory.setSuperclass(beanInstance.getClass());
+        proxyFactory.setInterfaces(new Class<?>[] {com.dimachine.core.Proxy.class});
+        Class<?> clazz = proxyFactory.createClass(new IgnoreObjectMethodsMethodFilter());
+        Proxy proxy = (Proxy) ReflectionUtils.makeInstance(clazz);
+        proxy.setHandler(new ConfigurationClassInvocationHandler(beanFactory, scopeResolver));
+        return proxy;
     }
 
-    private static class ConfigurationClassInvocationHandler implements MethodInterceptor {
-        private final Object beanInstance;
-        private final BeanFactory beanFactory;
+    private static class ConfigurationClassInvocationHandler implements MethodHandler {
+        private final Logger log = LoggerFactory.getLogger(ConfigurationClassInvocationHandler.class);
+        private final Object lock = new Object();
+        private final Set<String> executedMethods = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-        private ConfigurationClassInvocationHandler(Object beanInstance, BeanFactory beanFactory) {
-            this.beanInstance = beanInstance;
+        private final BeanFactory beanFactory;
+        private final ScopeResolver scopeResolver;
+
+        private ConfigurationClassInvocationHandler(BeanFactory beanFactory, ScopeResolver scopeResolver) {
             this.beanFactory = beanFactory;
+            this.scopeResolver = scopeResolver;
         }
 
         @Override
-        public Object intercept(Object proxy, Method method, Object[] arguments, MethodProxy methodProxy) throws Throwable {
-            if (shouldBypassMethod(method)) {
-                return ReflectionUtils.invokeMethod(beanInstance, method, arguments);
+        public Object invoke(Object self, Method thisMethod, Method proceed, Object[] args) throws Throwable {
+            BeanScope beanScope = scopeResolver.resolveScope(thisMethod);
+            if (isPrototype(beanScope)) {
+                return proceed.invoke(self, args);
+            } else {
+                return handleSingletonMethodInvocation(self, thisMethod, proceed, args);
             }
-            Object returnedResult = methodProxy.invoke(beanInstance, arguments);
-            return returnedResult;
         }
 
-        private boolean shouldBypassMethod(Method method) {
-            return bypassedMethods.contains(method.getName());
+        private Object handleSingletonMethodInvocation(Object self, Method thisMethod, Method proceed, Object[] args) throws Exception {
+            synchronized (lock) {
+                String methodSignature = makeMethodSignature(self, proceed);
+                if (!executedMethods.contains(methodSignature)) {
+                    executedMethods.add(methodSignature);
+                    return proceed.invoke(self, args);
+                } else {
+                    log.debug("@Bean method already invoked. Getting bean from BeanFactory instead");
+                    return beanFactory.getBean(thisMethod.getReturnType());
+                }
+            }
+        }
+
+        private boolean isPrototype(BeanScope beanScope) {
+            return beanScope == BeanScope.PROTOTYPE;
+        }
+
+        private String makeMethodSignature(Object self, Method proceed) {
+            return proceed.getModifiers() + " " + proceed.getReturnType().getName() + " " +
+                    self.getClass().getName() + "." + proceed.getName() +
+                    "(" + Arrays.toString(proceed.getParameterTypes()) + ")";
+        }
+    }
+
+    private static class IgnoreObjectMethodsMethodFilter implements MethodFilter {
+        @Override
+        public boolean isHandled(Method method) {
+            return !bypassedMethods.contains(method.getName());
         }
     }
 }

@@ -13,9 +13,8 @@
         <junit.version>5.7.0</junit.version>
         <logback.version>1.2.3</logback.version>
         <mockito.version>3.5.13</mockito.version>
-        <cglib.version>3.3.0</cglib.version>
         <classGraph.version>4.8.90</classGraph.version>
-        <objenesis.version>3.1</objenesis.version>
+        <javassist.version>3.27.0-GA</javassist.version>
     </properties>
 
     <dependencies>
@@ -25,19 +24,14 @@
             <version>${logback.version}</version>
         </dependency>
         <dependency>
-            <groupId>cglib</groupId>
-            <artifactId>cglib</artifactId>
-            <version>${cglib.version}</version>
-        </dependency>
-        <dependency>
             <groupId>io.github.classgraph</groupId>
             <artifactId>classgraph</artifactId>
             <version>${classGraph.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.objenesis</groupId>
-            <artifactId>objenesis</artifactId>
-            <version>${objenesis.version}</version>
+            <groupId>org.javassist</groupId>
+            <artifactId>javassist</artifactId>
+            <version>${javassist.version}</version>
         </dependency>
 
         <!-- Test dependencies -->
