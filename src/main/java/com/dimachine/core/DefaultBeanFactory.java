@@ -297,7 +297,7 @@ public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implement
             if (isConfigurationBean(beanDefinition.getRealBeanClass())) {
                 Class<?> originalConfigClass = beanDefinition.getRealBeanClass();
                 if (shouldProxyConfigClass(originalConfigClass)) {
-                    beanInstance = proxyFactory.proxyConfigurationClass(beanInstance, beanDefinition, this);
+                    beanInstance = proxyFactory.proxyConfigurationClass(beanInstance, this);
                 }
                 configObjectFactory.instantiateSingletonsFromConfigClass(beanInstance, originalConfigClass);
             }
