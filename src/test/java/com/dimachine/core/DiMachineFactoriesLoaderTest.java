@@ -1,9 +1,6 @@
 package com.dimachine.core;
 
-import com.dimachine.core.postprocessor.AutowiredAnnotationBeanPostProcessor;
-import com.dimachine.core.postprocessor.PostConstructAnnotationBeanPostProcessor;
-import com.dimachine.core.postprocessor.PreDestroyAnnotationBeanPostProcessor;
-import com.dimachine.core.postprocessor.ScheduledAnnotationBeanPostProcessor;
+import com.dimachine.core.postprocessor.*;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
@@ -36,6 +33,10 @@ public class DiMachineFactoriesLoaderTest {
                 SimpleBeanDefinition.builder()
                         .beanName("scheduledAnnotationBeanPostProcessor")
                         .className(ScheduledAnnotationBeanPostProcessor.class.getName())
+                        .build(),
+                SimpleBeanDefinition.builder()
+                        .beanName("valueAnnotationBeanPostProcessor")
+                        .className(ValueAnnotationBeanPostProcessor .class.getName())
                         .build()
         ), new HashSet<>(beanDefinitions));
     }
