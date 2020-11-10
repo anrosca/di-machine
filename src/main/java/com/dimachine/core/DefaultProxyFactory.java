@@ -1,5 +1,7 @@
 package com.dimachine.core;
 
+import com.dimachine.core.scanner.AnnotationBeanDefinitionScanner;
+import com.dimachine.core.scanner.BeanDefinitionScanner;
 import com.dimachine.core.util.ReflectionUtils;
 import javassist.util.proxy.MethodFilter;
 import javassist.util.proxy.MethodHandler;
@@ -32,7 +34,7 @@ public class DefaultProxyFactory implements ProxyFactory {
     public Object proxyConfigurationClass(Object beanInstance, BeanFactory beanFactory) {
         javassist.util.proxy.ProxyFactory proxyFactory = new javassist.util.proxy.ProxyFactory();
         proxyFactory.setSuperclass(beanInstance.getClass());
-        proxyFactory.setInterfaces(new Class<?>[] {com.dimachine.core.Proxy.class});
+        proxyFactory.setInterfaces(new Class<?>[]{com.dimachine.core.Proxy.class});
         Class<?> clazz = proxyFactory.createClass(new IgnoreObjectMethodsMethodFilter());
         Proxy proxy = (Proxy) ReflectionUtils.makeInstance(clazz);
         proxy.setHandler(new ConfigurationClassInvocationHandler(beanFactory, scopeResolver));
@@ -43,9 +45,9 @@ public class DefaultProxyFactory implements ProxyFactory {
         private final Logger log = LoggerFactory.getLogger(ConfigurationClassInvocationHandler.class);
         private final Object lock = new Object();
         private final Set<String> executedMethods = Collections.newSetFromMap(new ConcurrentHashMap<>());
-
         private final BeanFactory beanFactory;
         private final ScopeResolver scopeResolver;
+        private final BeanDefinitionScanner beanDefinitionScanner = new AnnotationBeanDefinitionScanner();
 
         private ConfigurationClassInvocationHandler(BeanFactory beanFactory, ScopeResolver scopeResolver) {
             this.beanFactory = beanFactory;
@@ -65,9 +67,11 @@ public class DefaultProxyFactory implements ProxyFactory {
         private Object handleSingletonMethodInvocation(Object self, Method thisMethod, Method proceed, Object[] args) throws Exception {
             synchronized (lock) {
                 String methodSignature = makeMethodSignature(self, proceed);
-                if (!executedMethods.contains(methodSignature)) {
+                if (!methodWasExecuted(methodSignature)) {
                     executedMethods.add(methodSignature);
-                    return proceed.invoke(self, args);
+                    Object beanInstance = proceed.invoke(self, args);
+                    beanFactory.registerSingleton(beanDefinitionScanner.makeBeanDefinition(thisMethod), beanInstance);
+                    return beanInstance;
                 } else {
                     log.debug("@Bean method already invoked. Getting bean from BeanFactory instead");
                     return beanFactory.getBean(thisMethod.getReturnType());
@@ -75,12 +79,17 @@ public class DefaultProxyFactory implements ProxyFactory {
             }
         }
 
+        private boolean methodWasExecuted(String methodSignature) {
+            return executedMethods.contains(methodSignature);
+        }
+
         private boolean isPrototype(BeanScope beanScope) {
             return beanScope == BeanScope.PROTOTYPE;
         }
 
         private String makeMethodSignature(Object self, Method proceed) {
-            return proceed.getModifiers() + " " + proceed.getReturnType().getName() + " " +
+            return ReflectionUtils.makePrettyModifiers(proceed.getModifiers()) + " " +
+                    proceed.getReturnType().getName() + " " +
                     self.getClass().getName() + "." + proceed.getName() +
                     "(" + Arrays.toString(proceed.getParameterTypes()) + ")";
         }

@@ -1,11 +1,15 @@
 package com.dimachine.core.util;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -40,8 +44,9 @@ public class ReflectionUtilsTest {
                 .collect(Collectors.toList());
 
         assertEquals(Set.of(
-                "equals", "hashCode", "toString", "finalize", "wait", "notify", "notifyAll", "getClass", "clone",
-                "f", "init", "getName"
+                "equals", "hashCode", "toString", "finalize",
+                "wait", "notify", "notifyAll", "getClass", "clone",
+                "f", "g", "h", "init", "getName"
         ), new HashSet<>(expectedDeclaredMethodsNames));
     }
 
@@ -80,6 +85,21 @@ public class ReflectionUtilsTest {
         assertThrows(RuntimeException.class, () -> ReflectionUtils.makeInstance(AbstractList.class));
     }
 
+    static Stream<Arguments> makeModifiersTestParameters() throws NoSuchMethodException {
+        return Stream.of(
+                Arguments.of("public", TestObject.class.getDeclaredMethod("getName").getModifiers()),
+                Arguments.of("private", TestObject.class.getDeclaredMethod("f").getModifiers()),
+                Arguments.of("protected", TestObject.class.getDeclaredMethod("g").getModifiers()),
+                Arguments.of("", TestObject.class.getDeclaredMethod("h").getModifiers())
+        );
+    }
+
+    @MethodSource("makeModifiersTestParameters")
+    @ParameterizedTest
+    public void shouldBeAbleToMakePrettyPublicModifier(String expectedModifier, int sourceModifier) {
+        assertEquals(expectedModifier, ReflectionUtils.makePrettyModifiers(sourceModifier));
+    }
+
     private static class TestObject {
         private String name = "<defaultValue>";
 
@@ -92,6 +112,12 @@ public class ReflectionUtilsTest {
         }
 
         private void f() {
+        }
+
+        protected void g() {
+        }
+
+        void h() {
         }
     }
 }
