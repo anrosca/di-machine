@@ -68,4 +68,13 @@ public class ReflectionUtils {
             return "protected";
         return "";
     }
+
+    public static Field[] getDeclaredFields(Class<?> beanClass) {
+        List<Field> declaredFields = new ArrayList<>();
+        while (beanClass != null) {
+            declaredFields.addAll(Arrays.asList(beanClass.getDeclaredFields()));
+            beanClass = beanClass.getSuperclass();
+        }
+        return declaredFields.toArray(Field[]::new);
+    }
 }
