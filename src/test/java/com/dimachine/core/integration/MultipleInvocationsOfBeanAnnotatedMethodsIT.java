@@ -28,11 +28,19 @@ public class MultipleInvocationsOfBeanAnnotatedMethodsIT {
         BeanFactory beanFactory = new DefaultBeanFactory(SingletonAppConfig.class);
         beanFactory.refresh();
 
-        beanFactory.getBean("singletonService");
-        beanFactory.getBean("singletonService");
-        beanFactory.getBean("singletonService");
+        beanFactory.getBean("yetAnotherService");
 
         assertEquals("singleton", String.join(";", invocations));
+    }
+
+    @Test
+    public void whenLightModeIsOn_singletonMethodShouldBeCalledAsNeeded() {
+        BeanFactory beanFactory = new DefaultBeanFactory(SingletonAppConfigInLightMode.class);
+        beanFactory.refresh();
+
+        beanFactory.getBean("yetAnotherService");
+
+        assertEquals("singleton;singleton;singleton", String.join(";", invocations));
     }
 
     @Test
@@ -64,6 +72,30 @@ public class MultipleInvocationsOfBeanAnnotatedMethodsIT {
         @Bean
         public FooService singletonService() {
             invocations.add("singleton");
+            return new FooService();
+        }
+
+        @Bean
+        public FooService yetAnotherService() {
+            singletonService();
+            singletonService();
+            return new FooService();
+        }
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    public static class SingletonAppConfigInLightMode {
+
+        @Bean
+        public FooService singletonService() {
+            invocations.add("singleton");
+            return new FooService();
+        }
+
+        @Bean
+        public FooService yetAnotherService() {
+            singletonService();
+            singletonService();
             return new FooService();
         }
     }
