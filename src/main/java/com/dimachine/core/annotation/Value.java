@@ -4,7 +4,7 @@ import java.lang.annotation.*;
 
 @Documented
 @Inherited
-@Target({ElementType.FIELD})
+@Target({ElementType.FIELD, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Value {
     String value() default "";

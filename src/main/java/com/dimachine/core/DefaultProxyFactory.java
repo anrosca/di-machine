@@ -1,5 +1,6 @@
 package com.dimachine.core;
 
+import com.dimachine.core.annotation.Bean;
 import com.dimachine.core.scanner.AnnotationBeanDefinitionScanner;
 import com.dimachine.core.scanner.BeanDefinitionScanner;
 import com.dimachine.core.util.ReflectionUtils;
@@ -88,17 +89,20 @@ public class DefaultProxyFactory implements ProxyFactory {
         }
 
         private String makeMethodSignature(Object self, Method proceed) {
-            return ReflectionUtils.makePrettyModifiers(proceed.getModifiers()) + " " +
-                    proceed.getReturnType().getName() + " " +
-                    self.getClass().getName() + "." + proceed.getName() +
-                    "(" + Arrays.toString(proceed.getParameterTypes()) + ")";
+            return "%s %s %s.%s(%s)".formatted(
+                    ReflectionUtils.makePrettyModifiers(proceed.getModifiers()),
+                    proceed.getReturnType().getName(),
+                    self.getClass().getName(),
+                    proceed.getName(),
+                    Arrays.toString(proceed.getParameterTypes())
+            );
         }
     }
 
     private static class IgnoreObjectMethodsMethodFilter implements MethodFilter {
         @Override
         public boolean isHandled(Method method) {
-            return !bypassedMethods.contains(method.getName());
+            return !bypassedMethods.contains(method.getName()) && method.isAnnotationPresent(Bean.class);
         }
     }
 }

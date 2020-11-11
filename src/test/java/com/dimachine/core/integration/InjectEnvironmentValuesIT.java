@@ -19,6 +19,7 @@ public class InjectEnvironmentValuesIT {
         AppConfig appConfig = beanFactory.getBean(AppConfig.class);
 
         assertEquals("di-machine", appConfig.applicationName);
+        assertEquals("di-machine", appConfig.name);
     }
 
     @Test
@@ -36,6 +37,12 @@ public class InjectEnvironmentValuesIT {
     public static class AppConfig {
         @Value("${application.name}")
         private String applicationName;
+        private String name;
+
+        @Value("${application.name}")
+        public void setName(String name) {
+            this.name = name;
+        }
     }
 
     @Configuration
