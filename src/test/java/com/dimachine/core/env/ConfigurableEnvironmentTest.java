@@ -31,6 +31,11 @@ public class ConfigurableEnvironmentTest {
     }
 
     @Test
+    public void shouldReturnDefaultValue_whenPlaceholderCannotBeResolvedAndPlaceholderHasDefaultValue() {
+        assertEquals("8080", environment.resolvePlaceholder("${server.port:8080}"));
+    }
+
+    @Test
     public void emptyEnvironmentShouldNotContainProperties() {
         environment = new ConfigurableEnvironment();
 

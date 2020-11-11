@@ -6,7 +6,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ConfigurableEnvironment implements Environment {
-    private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\$\\{([a-zA-z.0-9]+)}");
+    private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\$\\{([a-zA-z.0-9]+(:(?<defaultValue>[a-zA-z.0-9]+))*)}");
 
     private final PropertySources environmentProperties;
 
@@ -43,7 +43,8 @@ public class ConfigurableEnvironment implements Environment {
         Matcher matcher = PLACEHOLDER_PATTERN.matcher(placeholder);
         if (matcher.find()) {
             String propertyName = matcher.group(1);
-            return getProperty(propertyName);
+            String environmentProperty = getProperty(propertyName);
+            return environmentProperty != null ? environmentProperty : matcher.group("defaultValue");
         }
         return null;
     }

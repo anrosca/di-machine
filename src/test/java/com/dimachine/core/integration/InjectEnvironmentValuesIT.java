@@ -32,6 +32,16 @@ public class InjectEnvironmentValuesIT {
         assertEquals("${application.name}", appConfig.applicationName);
     }
 
+    @Test
+    public void whenPropertyCannotBeResolvedAndPlaceholderHasDefaultValue_shouldInjectTheDefaultValue() {
+        BeanFactory beanFactory = new DefaultBeanFactory(DefaultValueAppConfig.class);
+        beanFactory.refresh();
+
+        DefaultValueAppConfig appConfig = beanFactory.getBean(DefaultValueAppConfig.class);
+
+        assertEquals("8080", appConfig.serverPort);
+    }
+
     @Configuration
     @PropertySource("classpath:application.properties")
     public static class AppConfig {
@@ -43,6 +53,13 @@ public class InjectEnvironmentValuesIT {
         public void setName(String name) {
             this.name = name;
         }
+    }
+
+    @Configuration
+    @PropertySource("classpath:application.properties")
+    public static class DefaultValueAppConfig {
+        @Value("${server.port:8080}")
+        private String serverPort;
     }
 
     @Configuration

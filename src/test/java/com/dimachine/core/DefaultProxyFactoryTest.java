@@ -51,6 +51,17 @@ public class DefaultProxyFactoryTest {
         verify(beanFactory, times(2)).getBean(FooService.class);
     }
 
+    @Test
+    public void methodsWhichAreNotAnnotatedWithBean_shouldNotBeIntercepted() {
+        AppConfig proxiedConfigInstance = (AppConfig) proxyFactory.proxyConfigurationClass(new AppConfig(), beanFactory);
+
+        proxiedConfigInstance.setValue();
+        proxiedConfigInstance.setValue();
+
+        assertEquals("setValue;setValue", String.join(";", invocations));
+        verifyNoInteractions(beanFactory);
+    }
+
     @Configuration
     public static class AppConfig {
 
@@ -66,6 +77,10 @@ public class DefaultProxyFactoryTest {
         public FooService singletonService() {
             invocations.add("singleton");
             return new FooService();
+        }
+
+        public void setValue() {
+            invocations.add("setValue");
         }
     }
 }
