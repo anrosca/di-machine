@@ -100,6 +100,13 @@ public class ReflectionUtilsTest {
         assertEquals(expectedModifier, ReflectionUtils.makePrettyModifiers(sourceModifier));
     }
 
+    @Test
+    public void shouldBeAbleToGetAllFields() throws Exception {
+        Field[] declaredFields = ReflectionUtils.getDeclaredFields(TestObject.class);
+
+        assertArrayEquals(new Field[] {TestObject.class.getDeclaredField("name")}, declaredFields);
+    }
+
     private static class TestObject {
         private String name = "<defaultValue>";
 
