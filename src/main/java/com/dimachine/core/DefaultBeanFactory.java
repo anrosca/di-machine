@@ -2,6 +2,7 @@ package com.dimachine.core;
 
 import com.dimachine.core.annotation.Component;
 import com.dimachine.core.annotation.Configuration;
+import com.dimachine.core.annotation.Import;
 import com.dimachine.core.annotation.Service;
 import com.dimachine.core.locator.ComponentFilter;
 import com.dimachine.core.locator.ComponentPackageLocator;
@@ -305,10 +306,25 @@ public class DefaultBeanFactory extends AbstractBeanFactory {
 
     private void processConfigClass(BeanDefinition beanDefinition, Object beanInstance) {
         if (isConfigurationClass(beanDefinition.getRealBeanClass())) {
+            if (configClassHasImports(beanDefinition.getRealBeanClass())) {
+                processImportedConfigurations(beanDefinition.getRealBeanClass());
+            }
             Class<?> originalConfigClass = beanDefinition.getRealBeanClass();
             configObjectFactory.instantiateSingletonsFromConfigClass(beanInstance, originalConfigClass);
             scanNestedClasses(originalConfigClass.getDeclaredClasses());
         }
+    }
+
+    private void processImportedConfigurations(Class<?> configClass) {
+        Import theImport = configClass.getAnnotation(Import.class);
+        for (Class<?> newConfigClass : theImport.value()) {
+            BeanDefinition beanDefinition = beanDefinitionMaker.makeBeanDefinition(newConfigClass.getName());
+            makeSingletonIfNeeded(beanDefinition);
+        }
+    }
+
+    private boolean configClassHasImports(Class<?> configClass) {
+        return configClass.isAnnotationPresent(Import.class);
     }
 
     private void scanNestedClasses(Class<?>[] declaredClasses) {
