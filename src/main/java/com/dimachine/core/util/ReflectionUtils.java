@@ -49,11 +49,15 @@ public class ReflectionUtils {
         return methods;
     }
 
-    public static Object makeInstance(Class<?> clazz) {
+    @SuppressWarnings("unchecked")
+    public static <T> T makeInstance(Class<T> clazz, Object... constructorArguments) {
         try {
-            Constructor<?> constructor = clazz.getDeclaredConstructor();
+            Class<?>[] parameterTypes = Arrays.stream(constructorArguments)
+                    .map(Object::getClass)
+                    .toArray(Class[]::new);
+            Constructor<?> constructor = clazz.getDeclaredConstructor(parameterTypes);
             constructor.setAccessible(true);
-            return constructor.newInstance();
+            return (T) constructor.newInstance(constructorArguments);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

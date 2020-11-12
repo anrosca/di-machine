@@ -1,5 +1,7 @@
 package com.dimachine.core;
 
+import com.dimachine.core.annotation.Configuration;
+import com.dimachine.core.annotation.Value;
 import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
@@ -19,7 +21,7 @@ public class DefaultObjectFactoryTest {
         Object createdInstance = objectFactory.instantiate(TestFooService.class, defaultBeanFactory);
 
         assertNotNull(createdInstance);
-        assertTrue(createdInstance instanceof TestFooService);
+        assertEquals(TestFooService.class, createdInstance.getClass());
     }
 
     @Test
@@ -39,7 +41,7 @@ public class DefaultObjectFactoryTest {
 
         Object createdInstance = objectFactory.instantiate(TestBarService.class, defaultBeanFactory);
         assertNotNull(createdInstance);
-        assertTrue(createdInstance instanceof TestBarService);
+        assertEquals(TestBarService.class, createdInstance.getClass());
     }
 
     @Test
@@ -50,7 +52,7 @@ public class DefaultObjectFactoryTest {
 
         Object createdInstance = objectFactory.instantiate(ManyConstructorsFooService.class, defaultBeanFactory);
         assertNotNull(createdInstance);
-        assertTrue(createdInstance instanceof ManyConstructorsFooService);
+        assertEquals(ManyConstructorsFooService.class, createdInstance.getClass());
     }
 
     @Test
@@ -69,6 +71,45 @@ public class DefaultObjectFactoryTest {
         assertThrows(BeanInstantiationException.class, () -> objectFactory.instantiate(ExceptionFooService.class, defaultBeanFactory));
     }
 
+    @Test
+    public void whenInstantiatingConfigurationClass_shouldMakeAProxy() {
+        SimpleBeanDefinition beanDefinition = makeBeanDefinitionFor(AppConfig.class);
+        defaultBeanFactory.registerBeans(beanDefinition);
+
+        Object createdInstance = objectFactory.instantiate(AppConfig.class, defaultBeanFactory);
+
+        assertNotNull(createdInstance);
+        assertTrue(createdInstance instanceof AppConfig);
+        assertTrue(createdInstance instanceof Proxy);
+        assertNotEquals(AppConfig.class, createdInstance.getClass());
+    }
+
+    @Test
+    public void shouldNotProxyConfigurationClass_whenProxyBeanMethodsIsSetToFalse() {
+        SimpleBeanDefinition beanDefinition = makeBeanDefinitionFor(NoProxyAppConfig.class);
+        defaultBeanFactory.registerBeans(beanDefinition);
+
+        Object createdInstance = objectFactory.instantiate(NoProxyAppConfig.class, defaultBeanFactory);
+
+        assertNotNull(createdInstance);
+        assertFalse(createdInstance instanceof Proxy);
+        assertEquals(NoProxyAppConfig.class, createdInstance.getClass());
+    }
+
+    @Test
+    public void whenInstantiatingAProxiedConfigClass_shouldBeAbleToInjectEnvironmentValuesInConstructorParameters() {
+        SimpleBeanDefinition beanDefinition = makeBeanDefinitionFor(EnvironmentValuesAppConfig.class);
+        defaultBeanFactory.makeEnvironment();
+        defaultBeanFactory.registerBeans(beanDefinition);
+
+        EnvironmentValuesAppConfig createdInstance = objectFactory.instantiate(EnvironmentValuesAppConfig.class, defaultBeanFactory);
+
+        assertNotNull(createdInstance);
+        assertTrue(createdInstance instanceof Proxy);
+        assertNotEquals(EnvironmentValuesAppConfig.class, createdInstance.getClass());
+        assertEquals("8080", createdInstance.serverPort);
+    }
+
     private SimpleBeanDefinition makeBeanDefinitionFor(Class<?> beanClass) {
         return SimpleBeanDefinition.builder()
                 .className(beanClass.getName())
@@ -76,8 +117,24 @@ public class DefaultObjectFactoryTest {
                 .build();
     }
 
-    private static class TestFooService {
+    @Configuration
+    public static class AppConfig {
+    }
 
+    @Configuration(proxyBeanMethods = false)
+    public static class NoProxyAppConfig {
+    }
+
+    @Configuration
+    public static class EnvironmentValuesAppConfig {
+        private final String serverPort;
+
+        public EnvironmentValuesAppConfig(@Value("${server.port:8080}") String serverPort) {
+            this.serverPort = serverPort;
+        }
+    }
+
+    private static class TestFooService {
     }
 
     private static class TestBarService {

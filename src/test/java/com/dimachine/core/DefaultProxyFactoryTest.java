@@ -18,7 +18,7 @@ public class DefaultProxyFactoryTest {
     private static List<String> invocations;
 
     private final DefaultProxyFactory proxyFactory = new DefaultProxyFactory();
-    private final BeanFactory beanFactory = mock(BeanFactory.class);
+    private final DefaultBeanFactory beanFactory = mock(DefaultBeanFactory.class);
 
     @BeforeEach
     void setUp() {

@@ -23,6 +23,16 @@ public class InjectEnvironmentValuesIT {
     }
 
     @Test
+    public void shouldBeAbleToReadEnvironmentPropertiesAsConstructorParameters() {
+        BeanFactory beanFactory = new DefaultBeanFactory(ConstructorInjectedValuesConfig.class);
+        beanFactory.refresh();
+
+        ConstructorInjectedValuesConfig appConfig = beanFactory.getBean(ConstructorInjectedValuesConfig.class);
+
+        assertEquals("di-machine", appConfig.applicationName);
+    }
+
+    @Test
     public void whenValueCannotBeResolved_shouldInjectThePlaceholder() {
         BeanFactory beanFactory = new DefaultBeanFactory(NoPropertySourceAppConfig.class);
         beanFactory.refresh();
@@ -66,5 +76,15 @@ public class InjectEnvironmentValuesIT {
     public static class NoPropertySourceAppConfig {
         @Value("${application.name}")
         private String applicationName;
+    }
+
+    @Configuration
+    @PropertySource("classpath:application.properties")
+    public static class ConstructorInjectedValuesConfig {
+        private final String applicationName;
+
+        public ConstructorInjectedValuesConfig(@Value("${application.name}") String applicationName) {
+            this.applicationName = applicationName;
+        }
     }
 }

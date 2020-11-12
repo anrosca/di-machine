@@ -1,6 +1,8 @@
 package com.dimachine.core.postprocessor;
 
 import com.dimachine.core.BeanPostProcessor;
+import com.dimachine.core.Order;
+import com.dimachine.core.annotation.Ordered;
 import com.dimachine.core.annotation.Value;
 import com.dimachine.core.env.Environment;
 import com.dimachine.core.util.ReflectionUtils;
@@ -9,6 +11,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Objects;
 
+@Ordered(Order.HIGHEST_PRECEDENCE)
 public class ValueAnnotationBeanPostProcessor implements BeanPostProcessor {
     private final Environment environment;
 
