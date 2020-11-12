@@ -1,16 +1,11 @@
 package com.dimachine.core;
 
-import com.dimachine.core.env.ConfigurableEnvironment;
-import com.dimachine.core.env.Environment;
-import com.dimachine.core.env.MapPropertySources;
-
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class AbstractBeanDefinitionRegistry extends AbstractAliasRegistry implements BeanDefinitionRegistry {
     protected final Set<BeanDefinition> beanDefinitions = Collections.newSetFromMap(new ConcurrentHashMap<>());
     protected final Set<String> beanNames = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    protected final Environment environment = new ConfigurableEnvironment();
 
     @Override
     public void registerBeans(BeanDefinition... beanDefinitions) {
@@ -53,13 +48,4 @@ public abstract class AbstractBeanDefinitionRegistry extends AbstractAliasRegist
     public Set<BeanDefinition> getBeanDefinitions() {
         return Set.copyOf(beanDefinitions);
     }
-
-    protected void makeEnvironment() {
-        environment.merge(new MapPropertySources(System.getenv()));
-        DefaultBeanDefinitionMaker beanDefinitionMaker = new DefaultBeanDefinitionMaker();
-        String environmentClassName = environment.getClass().getName();
-        registerSingleton(beanDefinitionMaker.makeBeanDefinition(environmentClassName), environment);
-    }
-
-    protected abstract void registerSingleton(BeanDefinition beanDefinition, Object beanInstance);
 }

@@ -32,12 +32,17 @@ public class DefaultProxyFactory implements ProxyFactory {
     private final ScopeResolver scopeResolver = new ScopeResolver();
 
     @Override
-    public Object proxyConfigurationClass(Object beanInstance, BeanFactory beanFactory) {
+    public Object proxyConfigurationClass(Object beanInstance, DefaultBeanFactory beanFactory) {
+        return proxyConfigurationClass(beanInstance.getClass(), new Object[]{}, beanFactory);
+    }
+
+    @Override
+    public Object proxyConfigurationClass(Class<?> beanClass, Object[] constructorArguments, DefaultBeanFactory beanFactory) {
         javassist.util.proxy.ProxyFactory proxyFactory = new javassist.util.proxy.ProxyFactory();
-        proxyFactory.setSuperclass(beanInstance.getClass());
+        proxyFactory.setSuperclass(beanClass);
         proxyFactory.setInterfaces(new Class<?>[]{com.dimachine.core.Proxy.class});
         Class<?> clazz = proxyFactory.createClass(new IgnoreObjectMethodsMethodFilter());
-        Proxy proxy = (Proxy) ReflectionUtils.makeInstance(clazz);
+        Proxy proxy = (Proxy) ReflectionUtils.makeInstance(clazz, constructorArguments);
         proxy.setHandler(new ConfigurationClassInvocationHandler(beanFactory, scopeResolver));
         return proxy;
     }

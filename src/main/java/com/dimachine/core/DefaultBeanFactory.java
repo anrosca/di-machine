@@ -3,10 +3,6 @@ package com.dimachine.core;
 import com.dimachine.core.annotation.Component;
 import com.dimachine.core.annotation.Configuration;
 import com.dimachine.core.annotation.Service;
-import com.dimachine.core.env.ConfigurableEnvironment;
-import com.dimachine.core.env.Environment;
-import com.dimachine.core.env.PropertySourcesFactory;
-import com.dimachine.core.env.PropertySources;
 import com.dimachine.core.locator.ComponentFilter;
 import com.dimachine.core.locator.ComponentPackageLocator;
 import com.dimachine.core.locator.ComponentTraits;
@@ -19,7 +15,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implements BeanFactory, BeanDefinitionRegistry {
+public class DefaultBeanFactory extends AbstractBeanFactory {
+    private static final String BEAN_FACTORY_BEAN_NAME = "beanFactory";
     private static final List<Class<? extends Annotation>> targetAnnotations =
             List.of(Component.class, Service.class, Configuration.class);
 
@@ -28,7 +25,6 @@ public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implement
     private final ClasspathScanner classpathScanner;
     private final BeanDefinitionMaker beanDefinitionMaker = new DefaultBeanDefinitionMaker();
     private final List<BeanPostProcessor> beanPostProcessors = Collections.synchronizedList(new ArrayList<>());
-    private final ProxyFactory proxyFactory = new DefaultProxyFactory();
     private final AnnotationConfigObjectFactory configObjectFactory = new AnnotationConfigObjectFactory(this);
     private final AtomicBoolean wasClosed = new AtomicBoolean();
 
@@ -214,7 +210,7 @@ public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implement
     private void registerBeanFactory() {
         BeanDefinition beanDefinition = SimpleBeanDefinition.builder()
                 .className(getClass().getName())
-                .beanName("beanFactory")
+                .beanName(BEAN_FACTORY_BEAN_NAME)
                 .build();
         beanDefinitions.add(beanDefinition);
         singletonBeans.put(beanDefinition, this);
@@ -299,14 +295,7 @@ public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implement
     private void makeSingletonIfNeeded(BeanDefinition beanDefinition) {
         if (beanDefinition.isSingleton() && !singletonBeans.containsKey(beanDefinition)) {
             Object beanInstance = objectFactory.instantiate(beanDefinition.getRealBeanClass(), this);
-            if (isConfigurationBean(beanDefinition.getRealBeanClass())) {
-                processPropertySources(beanDefinition.getRealBeanClass());
-                Class<?> originalConfigClass = beanDefinition.getRealBeanClass();
-                if (shouldProxyConfigClass(originalConfigClass)) {
-                    beanInstance = proxyFactory.proxyConfigurationClass(beanInstance, this);
-                }
-                configObjectFactory.instantiateSingletonsFromConfigClass(beanInstance, originalConfigClass);
-            }
+            processConfigClass(beanDefinition, beanInstance);
             if (isBeanPostProcessor(beanInstance)) {
                 beanPostProcessors.add((BeanPostProcessor) beanInstance);
             }
@@ -314,19 +303,14 @@ public class DefaultBeanFactory extends AbstractBeanDefinitionRegistry implement
         }
     }
 
-    private void processPropertySources(Class<?> configClass) {
-        PropertySourcesFactory processor = new PropertySourcesFactory();
-        PropertySources propertySources = processor.load(configClass);
-        Environment environment = getBean(ConfigurableEnvironment.class);
-        environment.merge(propertySources);
+    private void processConfigClass(BeanDefinition beanDefinition, Object beanInstance) {
+        if (isConfigurationClass(beanDefinition.getRealBeanClass())) {
+            Class<?> originalConfigClass = beanDefinition.getRealBeanClass();
+            configObjectFactory.instantiateSingletonsFromConfigClass(beanInstance, originalConfigClass);
+        }
     }
 
-    private boolean shouldProxyConfigClass(Class<?> originalConfigClass) {
-        Configuration configuration = originalConfigClass.getAnnotation(Configuration.class);
-        return configuration.proxyBeanMethods();
-    }
-
-    private boolean isConfigurationBean(Class<?> beanClass) {
+    private boolean isConfigurationClass(Class<?> beanClass) {
         return beanClass.isAnnotationPresent(Configuration.class);
     }
 

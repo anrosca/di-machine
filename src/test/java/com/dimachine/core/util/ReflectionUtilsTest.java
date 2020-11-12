@@ -17,9 +17,9 @@ public class ReflectionUtilsTest {
 
     @Test
     public void shouldBeAbleToSetFieldValues() {
-        TestObject instance = new TestObject();
+        TestDummy instance = new TestDummy();
 
-        Field field = ReflectionUtils.getField(TestObject.class, "name");
+        Field field = ReflectionUtils.getField(TestDummy.class, "name");
         ReflectionUtils.setField(instance, field, "<newValue>");
 
         assertEquals("<newValue>", instance.name);
@@ -27,7 +27,7 @@ public class ReflectionUtilsTest {
 
     @Test
     public void shouldBeAbleToInvokeMethods() {
-        TestObject instance = new TestObject();
+        TestDummy instance = new TestDummy();
 
         Method method = ReflectionUtils.getMethod(instance.getClass(), "getName");
         String methodResult = (String) ReflectionUtils.invokeMethod(instance, method);
@@ -38,7 +38,7 @@ public class ReflectionUtilsTest {
     @Test
     public void shouldBeAbleToGetAllDeclaredMethods() {
 
-        List<String> expectedDeclaredMethodsNames = ReflectionUtils.getDeclaredMethods(TestObject.class)
+        List<String> expectedDeclaredMethodsNames = ReflectionUtils.getDeclaredMethods(TestDummy.class)
                 .stream()
                 .map(Method::getName)
                 .collect(Collectors.toList());
@@ -46,27 +46,27 @@ public class ReflectionUtilsTest {
         assertEquals(Set.of(
                 "equals", "hashCode", "toString", "finalize",
                 "wait", "notify", "notifyAll", "getClass", "clone",
-                "f", "g", "h", "init", "getName"
+                "privateMethod", "protectedMethod", "packageDefaultMethod", "init", "getName"
         ), new HashSet<>(expectedDeclaredMethodsNames));
     }
 
     @Test
     public void shouldWrapInRuntimeException_whenMethodCannotBeFound() {
-        TestObject instance = new TestObject();
+        TestDummy instance = new TestDummy();
 
         assertThrows(RuntimeException.class, () -> ReflectionUtils.getMethod(instance.getClass(), "destroy"));
     }
 
     @Test
     public void shouldWrapInRuntimeException_whenFieldCannotBeFound() {
-        TestObject instance = new TestObject();
+        TestDummy instance = new TestDummy();
 
         assertThrows(RuntimeException.class, () -> ReflectionUtils.getField(instance.getClass(), "init"));
     }
 
     @Test
     public void shouldWrapInRuntimeException_whenMethodInvocationFails() {
-        TestObject instance = new TestObject();
+        TestDummy instance = new TestDummy();
         Method method = ReflectionUtils.getMethod(instance.getClass(), "init");
 
         assertThrows(RuntimeException.class, () -> ReflectionUtils.invokeMethod(instance, method));
@@ -87,10 +87,10 @@ public class ReflectionUtilsTest {
 
     static Stream<Arguments> makeModifiersTestParameters() throws NoSuchMethodException {
         return Stream.of(
-                Arguments.of("public", TestObject.class.getDeclaredMethod("getName").getModifiers()),
-                Arguments.of("private", TestObject.class.getDeclaredMethod("f").getModifiers()),
-                Arguments.of("protected", TestObject.class.getDeclaredMethod("g").getModifiers()),
-                Arguments.of("", TestObject.class.getDeclaredMethod("h").getModifiers())
+                Arguments.of("public", TestDummy.class.getDeclaredMethod("getName").getModifiers()),
+                Arguments.of("private", TestDummy.class.getDeclaredMethod("privateMethod").getModifiers()),
+                Arguments.of("protected", TestDummy.class.getDeclaredMethod("protectedMethod").getModifiers()),
+                Arguments.of("", TestDummy.class.getDeclaredMethod("packageDefaultMethod").getModifiers())
         );
     }
 
@@ -102,13 +102,32 @@ public class ReflectionUtilsTest {
 
     @Test
     public void shouldBeAbleToGetAllFields() throws Exception {
-        Field[] declaredFields = ReflectionUtils.getDeclaredFields(TestObject.class);
+        Field[] declaredFields = ReflectionUtils.getDeclaredFields(TestDummy.class);
 
-        assertArrayEquals(new Field[] {TestObject.class.getDeclaredField("name")}, declaredFields);
+        assertArrayEquals(new Field[] {TestDummy.class.getDeclaredField("name")}, declaredFields);
     }
 
-    private static class TestObject {
+    @Test
+    public void shouldBeAbleToMakeInstanceUsingNonDefaultConstructor() {
+        TestDummy instance = ReflectionUtils.makeInstance(TestDummy.class, "ctor");
+
+        assertEquals("ctor", instance.name);
+    }
+
+    @Test
+    public void shouldThrowRuntimeException_whenNoMatchingConstructorWasFound() {
+        assertThrows(RuntimeException.class, () -> ReflectionUtils.makeInstance(TestDummy.class, new Object[] {"a", "b"}));
+    }
+
+    private static class TestDummy {
         private String name = "<defaultValue>";
+
+        public TestDummy() {
+        }
+
+        public TestDummy(String name) {
+            this.name = name;
+        }
 
         public String getName() {
             return name;
@@ -118,13 +137,13 @@ public class ReflectionUtilsTest {
             throw new IllegalArgumentException();
         }
 
-        private void f() {
+        private void privateMethod() {
         }
 
-        protected void g() {
+        protected void protectedMethod() {
         }
 
-        void h() {
+        void packageDefaultMethod() {
         }
     }
 }
