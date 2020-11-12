@@ -110,6 +110,20 @@ public class DefaultObjectFactoryTest {
         assertEquals("8080", createdInstance.serverPort);
     }
 
+    @Test
+    public void whenInstantiatingABean_shouldBeAbleToInjectEnvironmentValuesInConstructorParameters() {
+        SimpleBeanDefinition beanDefinition = makeBeanDefinitionFor(DummyBean.class);
+        defaultBeanFactory.makeEnvironment();
+        defaultBeanFactory.registerBeans(beanDefinition);
+
+        DummyBean createdInstance = objectFactory.instantiate(DummyBean.class, defaultBeanFactory);
+
+        assertNotNull(createdInstance);
+        assertFalse(createdInstance instanceof Proxy);
+        assertEquals(DummyBean.class, createdInstance.getClass());
+        assertEquals("8080", createdInstance.serverPort);
+    }
+
     private SimpleBeanDefinition makeBeanDefinitionFor(Class<?> beanClass) {
         return SimpleBeanDefinition.builder()
                 .className(beanClass.getName())
@@ -130,6 +144,14 @@ public class DefaultObjectFactoryTest {
         private final String serverPort;
 
         public EnvironmentValuesAppConfig(@Value("${server.port:8080}") String serverPort) {
+            this.serverPort = serverPort;
+        }
+    }
+
+    private static class DummyBean {
+        private final String serverPort;
+
+        private DummyBean(@Value("${server.port:8080}") String serverPort) {
             this.serverPort = serverPort;
         }
     }

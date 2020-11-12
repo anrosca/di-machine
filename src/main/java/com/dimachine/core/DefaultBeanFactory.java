@@ -295,11 +295,11 @@ public class DefaultBeanFactory extends AbstractBeanFactory {
     private void makeSingletonIfNeeded(BeanDefinition beanDefinition) {
         if (beanDefinition.isSingleton() && !singletonBeans.containsKey(beanDefinition)) {
             Object beanInstance = objectFactory.instantiate(beanDefinition.getRealBeanClass(), this);
+            singletonBeans.put(beanDefinition, beanInstance);
             processConfigClass(beanDefinition, beanInstance);
             if (isBeanPostProcessor(beanInstance)) {
                 beanPostProcessors.add((BeanPostProcessor) beanInstance);
             }
-            singletonBeans.put(beanDefinition, beanInstance);
         }
     }
 
@@ -307,6 +307,16 @@ public class DefaultBeanFactory extends AbstractBeanFactory {
         if (isConfigurationClass(beanDefinition.getRealBeanClass())) {
             Class<?> originalConfigClass = beanDefinition.getRealBeanClass();
             configObjectFactory.instantiateSingletonsFromConfigClass(beanInstance, originalConfigClass);
+            scanNestedClasses(originalConfigClass.getDeclaredClasses());
+        }
+    }
+
+    private void scanNestedClasses(Class<?>[] declaredClasses) {
+        for (Class<?> configClass : declaredClasses) {
+            if (isConfigurationClass(configClass)) {
+                BeanDefinition beanDefinition = beanDefinitionMaker.makeBeanDefinition(configClass.getName());
+                makeSingletonIfNeeded(beanDefinition);
+            }
         }
     }
 
