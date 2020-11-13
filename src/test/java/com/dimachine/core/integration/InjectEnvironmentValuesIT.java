@@ -4,6 +4,7 @@ import com.dimachine.core.BeanFactory;
 import com.dimachine.core.DefaultBeanFactory;
 import com.dimachine.core.annotation.Configuration;
 import com.dimachine.core.annotation.PropertySource;
+import com.dimachine.core.annotation.PropertySources;
 import com.dimachine.core.annotation.Value;
 import org.junit.jupiter.api.Test;
 
@@ -52,6 +53,17 @@ public class InjectEnvironmentValuesIT {
         assertEquals("8080", appConfig.serverPort);
     }
 
+    @Test
+    public void shouldBeAbleToSpecifyMultiplePropertySources() {
+        BeanFactory beanFactory = new DefaultBeanFactory(MultiplePropertySourcesConfig.class);
+        beanFactory.refresh();
+
+        MultiplePropertySourcesConfig config = beanFactory.getBean(MultiplePropertySourcesConfig.class);
+
+        assertEquals("di-machine", config.applicationName);
+        assertEquals("8080", config.serverPort);
+    }
+
     @Configuration
     @PropertySource("classpath:application.properties")
     public static class AppConfig {
@@ -85,6 +97,22 @@ public class InjectEnvironmentValuesIT {
 
         public ConstructorInjectedValuesConfig(@Value("${application.name}") String applicationName) {
             this.applicationName = applicationName;
+        }
+    }
+
+    @Configuration
+    @PropertySources({
+            @PropertySource("classpath:application.properties"),
+            @PropertySource("classpath:webApp.properties")
+    })
+    public static class MultiplePropertySourcesConfig {
+        private final String applicationName;
+        private final String serverPort;
+
+        public MultiplePropertySourcesConfig(@Value("${application.name}") String applicationName,
+                                             @Value("${server.port}") String serverPort) {
+            this.applicationName = applicationName;
+            this.serverPort = serverPort;
         }
     }
 }

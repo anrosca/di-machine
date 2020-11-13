@@ -26,7 +26,6 @@ public class DefaultBeanFactory extends AbstractBeanFactory {
     private final ClasspathScanner classpathScanner;
     private final BeanDefinitionMaker beanDefinitionMaker = new DefaultBeanDefinitionMaker();
     private final List<BeanPostProcessor> beanPostProcessors = Collections.synchronizedList(new ArrayList<>());
-    private final AnnotationConfigObjectFactory configObjectFactory = new AnnotationConfigObjectFactory(this);
     private final AtomicBoolean wasClosed = new AtomicBoolean();
 
     public DefaultBeanFactory(String... packagesToScan) {
@@ -310,6 +309,7 @@ public class DefaultBeanFactory extends AbstractBeanFactory {
                 processImportedConfigurations(beanDefinition.getRealBeanClass());
             }
             Class<?> originalConfigClass = beanDefinition.getRealBeanClass();
+            AnnotationConfigObjectFactory configObjectFactory = new AnnotationConfigObjectFactory(this);
             configObjectFactory.instantiateSingletonsFromConfigClass(beanInstance, originalConfigClass);
             scanNestedClasses(originalConfigClass.getDeclaredClasses());
         }

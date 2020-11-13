@@ -6,7 +6,6 @@ import java.lang.annotation.*;
 @Documented
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@Repeatable(PropertySources.class)
-public @interface PropertySource {
-    String value() default "";
+public @interface PropertySources {
+    PropertySource[] value() default {};
 }
