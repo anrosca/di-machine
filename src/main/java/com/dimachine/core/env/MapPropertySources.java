@@ -51,4 +51,9 @@ public class MapPropertySources implements PropertySources {
     public int hashCode() {
         return source.hashCode();
     }
+
+    @Override
+    public String toString() {
+        return source.toString();
+    }
 }
