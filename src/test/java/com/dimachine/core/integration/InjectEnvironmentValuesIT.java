@@ -6,9 +6,10 @@ import com.dimachine.core.annotation.Configuration;
 import com.dimachine.core.annotation.PropertySource;
 import com.dimachine.core.annotation.PropertySources;
 import com.dimachine.core.annotation.Value;
+import com.dimachine.core.env.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class InjectEnvironmentValuesIT {
 
@@ -64,6 +65,18 @@ public class InjectEnvironmentValuesIT {
         assertEquals("8080", config.serverPort);
     }
 
+    @Test
+    public void shouldThrowResourceNotFoundException_whenResourceIsMissingAndIgnoreIfNotFoundIsFalse() {
+        BeanFactory beanFactory = new DefaultBeanFactory(MissingPropertySourcesConfig.class);
+        assertThrows(ResourceNotFoundException.class, beanFactory::refresh);
+    }
+
+    @Test
+    public void shouldBeAbleToIgnoreMissingResources_whenResourceIsMissingAndIgnoreIfNotFoundIsSetToTrue() {
+        BeanFactory beanFactory = new DefaultBeanFactory(IgnoreMissingPropertySourcesConfig.class);
+        assertDoesNotThrow(beanFactory::refresh);
+    }
+
     @Configuration
     @PropertySource("classpath:application.properties")
     public static class AppConfig {
@@ -114,5 +127,15 @@ public class InjectEnvironmentValuesIT {
             this.applicationName = applicationName;
             this.serverPort = serverPort;
         }
+    }
+
+    @Configuration
+    @PropertySource(value = "classpath:appConfig.properties", ignoreIfNotFound = false)
+    public static class MissingPropertySourcesConfig {
+    }
+
+    @Configuration
+    @PropertySource(value = "classpath:appConfig.properties", ignoreIfNotFound = true)
+    public static class IgnoreMissingPropertySourcesConfig {
     }
 }
