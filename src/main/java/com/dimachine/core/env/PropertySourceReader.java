@@ -16,10 +16,14 @@ public class PropertySourceReader {
 
     public PropertySources read(PropertySource propertySource) {
         Resource resource = resourceLoader.getResource(propertySource.value());
+        if (!propertySource.ignoreIfNotFound() && !resource.exists()) {
+            throw new ResourceNotFoundException("Resource " + propertySource.value() +
+                    " was not found and @PropertySource.ignoreIfNotFound is false");
+        }
         if (resource.exists()) {
             return makePropertySourceFrom(resource);
         }
-        return null;
+        return new MapPropertySources();
     }
 
     private PropertySources makePropertySourceFrom(Resource resource) {

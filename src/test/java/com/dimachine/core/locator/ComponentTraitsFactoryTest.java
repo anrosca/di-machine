@@ -1,7 +1,7 @@
 package com.dimachine.core.locator;
 
 import com.dimachine.core.annotation.ComponentScan;
-import com.dimachine.core.annotation.FilterType;
+import com.dimachine.core.annotation.ComponentScan.FilterType;
 import com.dimachine.core.annotation.Service;
 import com.dimachine.core.type.AnnotationMetadata;
 import com.dimachine.core.type.ClassMetadata;

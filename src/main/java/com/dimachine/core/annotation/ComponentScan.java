@@ -25,4 +25,11 @@ public @interface ComponentScan {
 
         String[] pattern() default {};
     }
+
+    enum FilterType {
+        ANNOTATION,
+        ASSIGNABLE_TYPE,
+        CUSTOM,
+        REGEX;
+    }
 }

@@ -9,4 +9,6 @@ import java.lang.annotation.*;
 @Repeatable(PropertySources.class)
 public @interface PropertySource {
     String value() default "";
+
+    boolean ignoreIfNotFound() default false;
 }

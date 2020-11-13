@@ -1,7 +1,7 @@
 package com.dimachine.core.locator;
 
 import com.dimachine.core.annotation.ComponentScan;
-import com.dimachine.core.annotation.FilterType;
+import com.dimachine.core.annotation.ComponentScan.FilterType;
 
 import java.util.*;
 import java.util.function.Function;
