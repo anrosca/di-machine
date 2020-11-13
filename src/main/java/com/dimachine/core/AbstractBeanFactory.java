@@ -1,7 +1,10 @@
 package com.dimachine.core;
 
 import com.dimachine.core.annotation.Configuration;
+import com.dimachine.core.annotation.Import;
 import com.dimachine.core.env.*;
+
+import java.util.Arrays;
 
 public abstract class AbstractBeanFactory extends AbstractBeanDefinitionRegistry implements BeanFactory, BeanDefinitionRegistry {
     protected final Environment environment = new ConfigurableEnvironment();
@@ -17,8 +20,18 @@ public abstract class AbstractBeanFactory extends AbstractBeanDefinitionRegistry
     private void enrichEnvironment() {
         for (BeanDefinition beanDefinition : beanDefinitions) {
             Class<?> beanClass = beanDefinition.getRealBeanClass();
-            if (beanClass.isAnnotationPresent(Configuration.class)) {
-                processPropertySources(beanClass);
+            readConfigClass(beanClass);
+            Arrays.stream(beanClass.getDeclaredClasses())
+                        .forEach(this::readConfigClass);
+        }
+    }
+
+    private void readConfigClass(Class<?> beanClass) {
+        if (beanClass.isAnnotationPresent(Configuration.class)) {
+            processPropertySources(beanClass);
+            if (beanClass.isAnnotationPresent(Import.class)) {
+                Import theImport = beanClass.getAnnotation(Import.class);
+                Arrays.stream(theImport.value()).forEach(this::readConfigClass);
             }
         }
     }

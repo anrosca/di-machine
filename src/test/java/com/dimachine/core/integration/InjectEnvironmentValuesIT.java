@@ -2,10 +2,8 @@ package com.dimachine.core.integration;
 
 import com.dimachine.core.BeanFactory;
 import com.dimachine.core.DefaultBeanFactory;
-import com.dimachine.core.annotation.Configuration;
-import com.dimachine.core.annotation.PropertySource;
-import com.dimachine.core.annotation.PropertySources;
-import com.dimachine.core.annotation.Value;
+import com.dimachine.core.annotation.*;
+import com.dimachine.core.env.Environment;
 import com.dimachine.core.env.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
 
@@ -77,6 +75,26 @@ public class InjectEnvironmentValuesIT {
         assertDoesNotThrow(beanFactory::refresh);
     }
 
+    @Test
+    public void shouldBeAbleToReadPropertySourcesFromNestedConfigurationClasses() {
+        BeanFactory beanFactory = new DefaultBeanFactory(NestedConfigProperties.class);
+        beanFactory.refresh();
+
+        Environment environment = beanFactory.getBean(Environment.class);
+
+        assertEquals("di-machine", environment.getProperty("application.name"));
+    }
+
+    @Test
+    public void shouldBeAbleToReadPropertySourcesFromImportedConfigurationClasses() {
+        BeanFactory beanFactory = new DefaultBeanFactory(ImportedConfiguration.class);
+        beanFactory.refresh();
+
+        Environment environment = beanFactory.getBean(Environment.class);
+
+        assertEquals("di-machine", environment.getProperty("application.name"));
+    }
+
     @Configuration
     @PropertySource("classpath:application.properties")
     public static class AppConfig {
@@ -137,5 +155,19 @@ public class InjectEnvironmentValuesIT {
     @Configuration
     @PropertySource(value = "classpath:appConfig.properties", ignoreIfNotFound = true)
     public static class IgnoreMissingPropertySourcesConfig {
+    }
+
+    @Configuration
+    public static class NestedConfigProperties {
+
+        @Configuration
+        @PropertySource("classpath:application.properties")
+        public static class AppConfig {
+        }
+    }
+
+    @Import(AppConfig.class)
+    @Configuration
+    public static class ImportedConfiguration {
     }
 }
