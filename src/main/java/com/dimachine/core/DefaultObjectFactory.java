@@ -1,8 +1,10 @@
 package com.dimachine.core;
 
 import com.dimachine.core.annotation.Configuration;
+import com.dimachine.core.annotation.Qualifier;
 import com.dimachine.core.annotation.Value;
-import com.dimachine.core.env.EnvironmentUtil;
+import com.dimachine.core.env.Environment;
+import com.dimachine.core.util.AnnotationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +50,7 @@ public class DefaultObjectFactory implements ObjectFactory {
         int parameterIndex = 0;
         for (Class<?> beanClass : beans) {
             Annotation[] annotations = parameterAnnotations[parameterIndex++];
-            if (!beanFactory.contains(beanClass) && !EnvironmentUtil.isEnvironmentValue(annotations)) {
+            if (!beanFactory.contains(beanClass) && !isEnvironmentValue(annotations)) {
                 BeanDefinition beanDefinition = beanFactory.getBeanDefinition(beanClass)
                         .orElseThrow(() -> new NoSuchBeanDefinitionException("No bean definition of type " + beanClass + " found"));
                 beanFactory.registerSingleton(beanDefinition, instantiate(beanDefinition.getRealBeanClass(), beanFactory));
@@ -56,20 +58,45 @@ public class DefaultObjectFactory implements ObjectFactory {
         }
     }
 
+    private boolean isEnvironmentValue(Annotation[] annotations) {
+        return AnnotationUtils.containsAnnotation(annotations, Value.class);
+    }
+
     private Object[] getConstructorArguments(Constructor<?> constructor, BeanFactory beanFactory) {
         Class<?>[] parameterTypes = constructor.getParameterTypes();
         Annotation[][] parameterAnnotations = constructor.getParameterAnnotations();
         Object[] arguments = new Object[parameterTypes.length];
         for (int i = 0; i < arguments.length; ++i) {
-            Class<?> parameter = parameterTypes[i];
+            Class<?> argumentType = parameterTypes[i];
             Annotation[] annotations = parameterAnnotations[i];
-            if (EnvironmentUtil.isEnvironmentValue(annotations)) {
-                arguments[i] = EnvironmentUtil.resolveValue(annotations, beanFactory);
-            } else {
-                arguments[i] = beanFactory.getBean(parameter);
-            }
+            arguments[i] = resolveArgumentValue(annotations, argumentType, beanFactory);
         }
         return arguments;
+    }
+
+    private Object resolveArgumentValue(Annotation[] annotations, Class<?> argumentType, BeanFactory beanFactory) {
+        if (isEnvironmentValue(annotations)) {
+            return resolveEnvironmentValue(beanFactory, annotations);
+        } else if (isQualifiedName(annotations)) {
+            return revolveQualifiedName(beanFactory, argumentType, annotations);
+        } else {
+            return beanFactory.getBean(argumentType);
+        }
+    }
+
+    private Object revolveQualifiedName(BeanFactory beanFactory, Class<?> beanType, Annotation[] annotations) {
+        String beanName = (String) AnnotationUtils.getAnnotationValue(annotations, Qualifier.class);
+        return beanFactory.getBean(beanName, beanType);
+    }
+
+    private boolean isQualifiedName(Annotation[] annotations) {
+        return AnnotationUtils.containsAnnotation(annotations, Qualifier.class);
+    }
+
+    private Object resolveEnvironmentValue(BeanFactory beanFactory, Annotation[] annotations) {
+        String placeholder = (String) AnnotationUtils.getAnnotationValue(annotations, Value.class);
+        Environment environment = beanFactory.getBean(Environment.class);
+        return environment.resolvePlaceholder(placeholder);
     }
 
     private Constructor<?> getGreediestParamConstructor(Constructor<?>[] declaredConstructors,
@@ -93,7 +120,7 @@ public class DefaultObjectFactory implements ObjectFactory {
         for (Class<?> parameterType : parameterTypes) {
             Annotation[] annotations = parameterAnnotations[parameterIndex++];
             boolean isResolvable = registry.containsBeanDefinitionOfType(parameterType);
-            isResolvable |= EnvironmentUtil.isEnvironmentValue(annotations);
+            isResolvable |= isEnvironmentValue(annotations);
             canSatisfyParameters &= isResolvable;
         }
         return canSatisfyParameters;

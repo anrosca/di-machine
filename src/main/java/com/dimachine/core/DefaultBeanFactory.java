@@ -71,7 +71,17 @@ public class DefaultBeanFactory extends AbstractBeanFactory {
         if (!foundBeanDefinition.isCompatibleWith(beanName, clazz)) {
             throw new NoSuchBeanDefinitionException("No bean definition with " + beanName + " and type " + clazz + " found");
         }
-        return getBean(clazz);
+        if (foundBeanDefinition.isPrototype()) {
+            return instantiatePrototype(foundBeanDefinition);
+        }
+        return singletonBeans.entrySet()
+                .stream()
+                .filter(entry -> clazz.isAssignableFrom(entry.getValue().getClass()))
+                .filter(entry -> entry.getKey().isCompatibleWith(beanName, clazz))
+                .findFirst()
+                .map(Map.Entry::getValue)
+                .map(clazz::cast)
+                .orElseThrow(() -> new NoSuchBeanDefinitionException("No bean with of type " + clazz + " found"));
     }
 
     @Override
@@ -84,7 +94,11 @@ public class DefaultBeanFactory extends AbstractBeanFactory {
         return singletonBeans.entrySet()
                 .stream()
                 .filter(entry -> clazz.isAssignableFrom(entry.getValue().getClass()))
-                .findFirst()
+                .reduce((a, b) -> {
+                    throw new NonUniqueBeanDefinitionException("There are more than one beans compatible with type: " +
+                            clazz.getName() + ". For example: bean " + a.getKey().getBeanName()
+                            + " and bean " + b.getKey().getBeanName());
+                })
                 .map(Map.Entry::getValue)
                 .map(clazz::cast)
                 .orElseThrow(() -> new NoSuchBeanDefinitionException("No bean with of type " + clazz + " found"));
@@ -331,6 +345,7 @@ public class DefaultBeanFactory extends AbstractBeanFactory {
         for (Class<?> configClass : declaredClasses) {
             if (isConfigurationClass(configClass)) {
                 BeanDefinition beanDefinition = beanDefinitionMaker.makeBeanDefinition(configClass.getName());
+                registerBeans(beanDefinition);
                 makeSingletonIfNeeded(beanDefinition);
             }
         }
