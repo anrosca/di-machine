@@ -47,7 +47,7 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
             method.setAccessible(true);
             method.invoke(bean, parameterValues);
         } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new BeanInitialisationException("Could not autowire method " + method.getName(), e);
+            throw new BeanInitializationException("Could not autowire method " + method.getName(), e);
         }
     }
 

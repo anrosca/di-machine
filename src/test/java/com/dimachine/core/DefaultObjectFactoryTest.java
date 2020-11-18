@@ -2,6 +2,7 @@ package com.dimachine.core;
 
 import com.dimachine.core.annotation.Configuration;
 import com.dimachine.core.annotation.Value;
+import com.dimachine.core.proxy.Proxy;
 import org.junit.jupiter.api.Test;
 
 import java.util.Objects;

@@ -1,6 +1,6 @@
 package com.dimachine.core.postprocessor;
 
-import com.dimachine.core.BeanInitialisationException;
+import com.dimachine.core.BeanInitializationException;
 import com.dimachine.core.BeanPostProcessor;
 import com.dimachine.core.Order;
 import com.dimachine.core.annotation.Ordered;
@@ -19,7 +19,7 @@ public class PostConstructAnnotationBeanPostProcessor implements BeanPostProcess
         for (Method method : ReflectionUtils.getDeclaredMethods(beanClass)) {
             if (method.isAnnotationPresent(PostConstruct.class)) {
                 if (method.getParameterCount() != 0) {
-                    throw new BeanInitialisationException("Failed to initialise bean " + bean.getClass() +
+                    throw new BeanInitializationException("Failed to initialise bean " + bean.getClass() +
                             ". Expected init method " + method.getName() + " to have no parameters");
                 }
                 invokeMethod(bean, method);
@@ -33,7 +33,7 @@ public class PostConstructAnnotationBeanPostProcessor implements BeanPostProcess
             method.setAccessible(true);
             method.invoke(bean);
         } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new BeanInitialisationException("Initialisation of bean " + bean.getClass() + " failed", e);
+            throw new BeanInitializationException("Initialisation of bean " + bean.getClass() + " failed", e);
         }
     }
 }
