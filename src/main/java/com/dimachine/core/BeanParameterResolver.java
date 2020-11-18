@@ -97,7 +97,7 @@ public class BeanParameterResolver {
     private void checkMapKeyType(String entityName, Type actualTypeArgument) {
         String keyTypeName = actualTypeArgument.getTypeName();
         if (!keyTypeName.equals(String.class.getName())) {
-            throw new BeanInitialisationException("Injection failed for " + entityName + ". Map key is not a string");
+            throw new BeanInitializationException("Injection failed for " + entityName + ". Map key is not a string");
         }
     }
 
@@ -113,7 +113,7 @@ public class BeanParameterResolver {
             ParameterizedType genericType = (ParameterizedType) method.getGenericParameterTypes()[0];
             return doResolveCollectionValue(genericType, parameterType, method.getName());
         } catch (ClassNotFoundException e) {
-            throw new BeanInitialisationException("Dependency injection failed " + method.getName() +
+            throw new BeanInitializationException("Dependency injection failed " + method.getName() +
                     ". Parameter class not found", e);
         }
     }

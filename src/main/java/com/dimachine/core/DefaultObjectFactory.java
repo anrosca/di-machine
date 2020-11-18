@@ -4,6 +4,9 @@ import com.dimachine.core.annotation.Configuration;
 import com.dimachine.core.annotation.Qualifier;
 import com.dimachine.core.annotation.Value;
 import com.dimachine.core.env.Environment;
+import com.dimachine.core.proxy.ConfigurationClassInvocationHandler;
+import com.dimachine.core.proxy.DefaultProxyFactory;
+import com.dimachine.core.proxy.ProxyFactory;
 import com.dimachine.core.util.AnnotationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +42,8 @@ public class DefaultObjectFactory implements ObjectFactory {
         constructor.setAccessible(true);
         Object[] constructorArguments = getConstructorArguments(constructor, beanFactory);
         if (isConfigurationBean(beanClass) && shouldProxyConfigClass(beanClass)) {
-            return (T) proxyFactory.proxyConfigurationClass(beanClass, constructorArguments, beanFactory);
+            ConfigurationClassInvocationHandler invocationHandler = new ConfigurationClassInvocationHandler(beanFactory);
+            return (T) proxyFactory.makeProxy(beanClass, constructorArguments, invocationHandler);
         }
         return (T) constructor.newInstance(constructorArguments);
     }

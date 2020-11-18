@@ -32,7 +32,7 @@ public class JavaConfigObjectProvider implements ObjectProvider {
                 }
             }
         }
-        throw new BeanInitialisationException("Bean with name " + beanDefinition.getBeanName() +
+        throw new BeanInitializationException("Bean with name " + beanDefinition.getBeanName() +
                 " with class " + beanDefinition.getBeanAssignableClass() +
                 " could not be instantiated. @Bean method missing.");
     }
@@ -86,7 +86,7 @@ public class JavaConfigObjectProvider implements ObjectProvider {
         return false;
     }
 
-    private Boolean hasCycle(Class<?> beanClass, DefaultBeanFactory beanFactory, Class<?> dependencyClass) {
+    private boolean hasCycle(Class<?> beanClass, DefaultBeanFactory beanFactory, Class<?> dependencyClass) {
         return beanFactory.getBeanDefinition(dependencyClass)
                 .map(BeanDefinition::getObjectProvider)
                 .map(objectProvider -> objectProvider.hasDependency(beanClass))

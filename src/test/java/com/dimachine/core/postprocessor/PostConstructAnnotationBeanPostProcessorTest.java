@@ -1,6 +1,6 @@
 package com.dimachine.core.postprocessor;
 
-import com.dimachine.core.BeanInitialisationException;
+import com.dimachine.core.BeanInitializationException;
 import com.dimachine.core.annotation.PostConstruct;
 import org.junit.jupiter.api.Test;
 
@@ -38,14 +38,14 @@ public class PostConstructAnnotationBeanPostProcessorTest {
     public void shouldThrowBeanInitialisationException_whenPostConstructMethodHasParameters() {
         Object bean = new IncorrectInitMethodTestBean();
 
-        assertThrows(BeanInitialisationException.class, () -> beanPostProcessor.postProcessBeforeInitialisation(bean, "testBean"));
+        assertThrows(BeanInitializationException.class, () -> beanPostProcessor.postProcessBeforeInitialisation(bean, "testBean"));
     }
 
     @Test
     public void shouldThrowBeanInitialisationException_whenInitMethodThrowsException() {
         Object bean = new ExceptionInitMethodTestBean();
 
-        assertThrows(BeanInitialisationException.class, () -> beanPostProcessor.postProcessBeforeInitialisation(bean, "testBean"));
+        assertThrows(BeanInitializationException.class, () -> beanPostProcessor.postProcessBeforeInitialisation(bean, "testBean"));
     }
 
     private class InitMethodTestBean {

@@ -184,7 +184,7 @@ public class BeanParameterResolverTest {
         when(beanFactory.getBeansMapOfType(SomeService.class)).thenReturn(Map.of("someService", resolvedParameter));
         Method method = MethodsConfigClass.class.getMethod("mapWrongKeyTypeParameter", Map.class);
 
-        assertThrows(BeanInitialisationException.class, () -> parameterResolver.resolve(method));
+        assertThrows(BeanInitializationException.class, () -> parameterResolver.resolve(method));
     }
 
     private static class MethodsConfigClass {

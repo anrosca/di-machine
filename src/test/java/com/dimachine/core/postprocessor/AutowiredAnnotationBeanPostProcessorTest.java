@@ -1,7 +1,7 @@
 package com.dimachine.core.postprocessor;
 
 import com.dimachine.core.BeanFactory;
-import com.dimachine.core.BeanInitialisationException;
+import com.dimachine.core.BeanInitializationException;
 import com.dimachine.core.FieldInjectionFailedException;
 import com.dimachine.core.annotation.Autowired;
 import org.junit.jupiter.api.BeforeEach;
@@ -74,7 +74,7 @@ public class AutowiredAnnotationBeanPostProcessorTest {
     public void shouldThrowBeanInitialisationException_whenSetterInjectionFails() {
         ExceptionSetterBarService barService = new ExceptionSetterBarService();
 
-        assertThrows(BeanInitialisationException.class, () -> postProcessor.postProcessBeforeInitialisation(barService, "beanName"));
+        assertThrows(BeanInitializationException.class, () -> postProcessor.postProcessBeforeInitialisation(barService, "beanName"));
     }
 
     @Test
@@ -148,7 +148,7 @@ public class AutowiredAnnotationBeanPostProcessorTest {
         when(beanFactory.getBeansMapOfType(FooService.class)).thenReturn(expectedDependencies);
         AutowireMapWithWrongKeyBarService bean = new AutowireMapWithWrongKeyBarService();
 
-        assertThrows(BeanInitialisationException.class, () -> postProcessor.postProcessBeforeInitialisation(bean, "testBean"));
+        assertThrows(BeanInitializationException.class, () -> postProcessor.postProcessBeforeInitialisation(bean, "testBean"));
     }
 
     @Test
