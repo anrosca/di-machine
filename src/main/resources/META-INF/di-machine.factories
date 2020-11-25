@@ -2,4 +2,5 @@ com.dimachine.core.BeanPostProcessor=com.dimachine.core.postprocessor.PostConstr
 com.dimachine.core.postprocessor.AutowiredAnnotationBeanPostProcessor,\
 com.dimachine.core.postprocessor.PreDestroyAnnotationBeanPostProcessor,\
 com.dimachine.core.postprocessor.ScheduledAnnotationBeanPostProcessor,\
-com.dimachine.core.postprocessor.ValueAnnotationBeanPostProcessor
+com.dimachine.core.postprocessor.ValueAnnotationBeanPostProcessor,\
+com.dimachine.core.postprocessor.AsyncAnnotationBeanPostProcessor

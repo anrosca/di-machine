@@ -4,9 +4,7 @@ import com.dimachine.core.annotation.Configuration;
 import com.dimachine.core.annotation.Qualifier;
 import com.dimachine.core.annotation.Value;
 import com.dimachine.core.env.Environment;
-import com.dimachine.core.proxy.ConfigurationClassInvocationHandler;
-import com.dimachine.core.proxy.DefaultProxyFactory;
-import com.dimachine.core.proxy.ProxyFactory;
+import com.dimachine.core.proxy.*;
 import com.dimachine.core.util.AnnotationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,8 +31,7 @@ public class DefaultObjectFactory implements ObjectFactory {
     @SuppressWarnings("unchecked")
     private <T> T tryInstantiate(Class<T> beanClass, DefaultBeanFactory beanFactory)
             throws InstantiationException, IllegalAccessException, InvocationTargetException {
-        Constructor<?>[] declaredConstructors = beanClass.getDeclaredConstructors();
-        Constructor<?> constructor = getGreediestParamConstructor(declaredConstructors, beanFactory, beanClass);
+        Constructor<?> constructor = getGreediestParamConstructor(beanFactory, beanClass);
         if (constructor == null)
             throw new BeanCannotBeInstantiatedException("Bean of type " + beanClass + " cannot be instantiated " +
                     "because it has no default constructor");
@@ -42,10 +39,21 @@ public class DefaultObjectFactory implements ObjectFactory {
         constructor.setAccessible(true);
         Object[] constructorArguments = getConstructorArguments(constructor, beanFactory);
         if (isConfigurationBean(beanClass) && shouldProxyConfigClass(beanClass)) {
-            ConfigurationClassInvocationHandler invocationHandler = new ConfigurationClassInvocationHandler(beanFactory);
-            return (T) proxyFactory.makeProxy(beanClass, constructorArguments, invocationHandler);
+            return makeProxy(beanClass, beanFactory, constructorArguments);
         }
         return (T) constructor.newInstance(constructorArguments);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T makeProxy(Class<T> beanClass, DefaultBeanFactory beanFactory, Object[] constructorArguments) {
+        ConfigurationClassInvocationHandler invocationHandler = new ConfigurationClassInvocationHandler(beanFactory);
+        ProxyTraits proxyTraits = ProxyTraits.builder()
+                .superClass(beanClass)
+                .constructorArguments(constructorArguments)
+                .methodInterceptor(invocationHandler)
+                .methodFilter(new IgnoreObjectMethodsMethodFilter().and(new IncludeBeanMethodsProxyMethodFilter()))
+                .build();
+        return (T) proxyFactory.makeProxy(proxyTraits);
     }
 
     private void registerBeanDependencies(Constructor<?> constructor, DefaultBeanFactory beanFactory) {
@@ -103,9 +111,8 @@ public class DefaultObjectFactory implements ObjectFactory {
         return environment.resolvePlaceholder(placeholder);
     }
 
-    private Constructor<?> getGreediestParamConstructor(Constructor<?>[] declaredConstructors,
-                                                        BeanDefinitionRegistry registry, Class<?> beanClass) {
-        for (Constructor<?> constructor : declaredConstructors) {
+    private Constructor<?> getGreediestParamConstructor(BeanDefinitionRegistry registry, Class<?> beanClass) {
+        for (Constructor<?> constructor : beanClass.getDeclaredConstructors()) {
             Class<?>[] parameterTypes = constructor.getParameterTypes();
             Annotation[][] parameterAnnotations = constructor.getParameterAnnotations();
             if (!isDefaultConstructor(constructor)) {
@@ -115,7 +122,7 @@ public class DefaultObjectFactory implements ObjectFactory {
                 }
             }
         }
-        return getDefaultConstructor(declaredConstructors);
+        return getDefaultConstructor(beanClass.getDeclaredConstructors());
     }
 
     private boolean canSatisfyParameters(BeanDefinitionRegistry registry, Class<?>[] parameterTypes, Annotation[][] parameterAnnotations) {

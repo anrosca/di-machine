@@ -1,7 +1,5 @@
 package com.dimachine.core.proxy;
 
-import com.dimachine.core.annotation.Bean;
-
 import java.lang.reflect.Method;
 import java.util.Set;
 
@@ -20,6 +18,6 @@ public class IgnoreObjectMethodsMethodFilter implements ProxyMethodFilter {
 
     @Override
     public boolean isHandled(Method method) {
-        return !bypassedMethods.contains(method.getName()) && method.isAnnotationPresent(Bean.class);
+        return !bypassedMethods.contains(method.getName());
     }
 }

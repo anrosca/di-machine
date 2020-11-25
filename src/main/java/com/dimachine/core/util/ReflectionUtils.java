@@ -4,6 +4,7 @@ import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ReflectionUtils {
 
@@ -34,11 +35,13 @@ public class ReflectionUtils {
     }
 
     public static Method getMethod(Class<?> clazz, String methodName, Class<?>... parameterTypes) {
-        try {
-            return clazz.getMethod(methodName, parameterTypes);
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
+        List<Method> declaredMethods = getDeclaredMethods(clazz);
+        for (Method method : declaredMethods) {
+            if (method.getName().equals(methodName) && Arrays.equals(method.getParameterTypes(), parameterTypes)) {
+                return method;
+            }
         }
+        return null;
     }
 
     public static List<Method> getDeclaredMethods(Class<?> clazz) {
@@ -80,5 +83,18 @@ public class ReflectionUtils {
             beanClass = beanClass.getSuperclass();
         }
         return declaredFields.toArray(Field[]::new);
+    }
+
+    public static String makePrettyMethodSignature(Class<?> clazz, Method proceed) {
+        String methodParameters = Arrays.stream(proceed.getParameterTypes())
+                .map(Class::getName)
+                .collect(Collectors.joining(","));
+        return "%s %s %s.%s(%s)".formatted(
+                ReflectionUtils.makePrettyModifiers(proceed.getModifiers()),
+                proceed.getReturnType().getName(),
+                clazz.getName(),
+                proceed.getName(),
+                String.join(",", methodParameters)
+        );
     }
 }

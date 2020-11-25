@@ -37,6 +37,10 @@ public class DiMachineFactoriesLoaderTest {
                 SimpleBeanDefinition.builder()
                         .beanName("valueAnnotationBeanPostProcessor")
                         .className(ValueAnnotationBeanPostProcessor .class.getName())
+                        .build(),
+                SimpleBeanDefinition.builder()
+                        .beanName("asyncAnnotationBeanPostProcessor")
+                        .className(AsyncAnnotationBeanPostProcessor .class.getName())
                         .build()
         ), new HashSet<>(beanDefinitions));
     }
