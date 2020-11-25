@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,7 +39,7 @@ public class ConfigurationClassInvocationHandler implements MethodInterceptor {
 
     private Object handleSingletonMethodInvocation(Object self, Method thisMethod, Method proceed, Object[] args) throws Exception {
         synchronized (lock) {
-            String methodSignature = makeMethodSignature(self, proceed);
+            String methodSignature = ReflectionUtils.makePrettyMethodSignature(self.getClass(), proceed);
             BeanDefinition beanDefinition = beanDefinitionScanner.makeBeanDefinition(thisMethod);
             if (!methodWasExecuted(methodSignature)) {
                 executedMethods.add(methodSignature);
@@ -60,15 +59,5 @@ public class ConfigurationClassInvocationHandler implements MethodInterceptor {
 
     private boolean isPrototype(BeanScope beanScope) {
         return beanScope == BeanScope.PROTOTYPE;
-    }
-
-    private String makeMethodSignature(Object self, Method proceed) {
-        return "%s %s %s.%s(%s)".formatted(
-                ReflectionUtils.makePrettyModifiers(proceed.getModifiers()),
-                proceed.getReturnType().getName(),
-                self.getClass().getName(),
-                proceed.getName(),
-                Arrays.toString(proceed.getParameterTypes())
-        );
     }
 }

@@ -54,7 +54,7 @@ public class ReflectionUtilsTest {
     public void shouldWrapInRuntimeException_whenMethodCannotBeFound() {
         TestDummy instance = new TestDummy();
 
-        assertThrows(RuntimeException.class, () -> ReflectionUtils.getMethod(instance.getClass(), "destroy"));
+        assertNull(ReflectionUtils.getMethod(instance.getClass(), "destroy"));
     }
 
     @Test
@@ -117,6 +117,15 @@ public class ReflectionUtilsTest {
     @Test
     public void shouldThrowRuntimeException_whenNoMatchingConstructorWasFound() {
         assertThrows(RuntimeException.class, () -> ReflectionUtils.makeInstance(TestDummy.class, new Object[] {"a", "b"}));
+    }
+
+    @Test
+    public void shouldBeAbleToMakePrettyMethodSignature() throws NoSuchMethodException {
+        Method method = TestDummy.class.getDeclaredMethod("protectedMethod");
+
+        String expectedSignature = "protected void com.dimachine.core.util.ReflectionUtilsTest$TestDummy."
+                + "protectedMethod()";
+        assertEquals(expectedSignature, ReflectionUtils.makePrettyMethodSignature(TestDummy.class, method));
     }
 
     private static class TestDummy {

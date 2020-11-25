@@ -10,21 +10,6 @@ import java.lang.reflect.Method;
 public class DefaultProxyFactory implements ProxyFactory {
 
     @Override
-    public Object makeProxy(Class<?> beanClass, Object[] constructorArguments, MethodInterceptor methodInterceptor) {
-        return makeProxy(ProxyTraits.builder()
-                .superClass(beanClass)
-                .constructorArguments(constructorArguments)
-                .methodInterceptor(methodInterceptor)
-                .methodFilter(new IgnoreObjectMethodsMethodFilter())
-                .build());
-    }
-
-    @Override
-    public Object makeProxy(Class<?> beanClass, MethodInterceptor methodInterceptor) {
-        return makeProxy(beanClass, new Object[]{}, methodInterceptor);
-    }
-
-    @Override
     public Object makeProxy(ProxyTraits proxyTraits) {
         javassist.util.proxy.ProxyFactory proxyFactory = new javassist.util.proxy.ProxyFactory();
         proxyFactory.setSuperclass(proxyTraits.getSuperClass());
@@ -33,6 +18,15 @@ public class DefaultProxyFactory implements ProxyFactory {
         Proxy proxy = (Proxy) ReflectionUtils.makeInstance(clazz, proxyTraits.getConstructorArguments());
         proxy.setHandler(new MethodHandlerAdapter(proxyTraits.getMethodInterceptor()));
         return proxy;
+    }
+
+    @Override
+    public Class<?> makeProxyClass(ProxyTraits proxyTraits) {
+        javassist.util.proxy.ProxyFactory proxyFactory = new javassist.util.proxy.ProxyFactory();
+        proxyFactory.setSuperclass(proxyTraits.getSuperClass());
+        proxyFactory.setHandler(new MethodHandlerAdapter(proxyTraits.getMethodInterceptor()));
+        proxyFactory.setInterfaces(new Class<?>[]{com.dimachine.core.proxy.Proxy.class});
+        return proxyFactory.createClass(new MethodFilterAdapter(proxyTraits.getMethodFilter()));
     }
 
     private static class MethodHandlerAdapter implements MethodHandler {

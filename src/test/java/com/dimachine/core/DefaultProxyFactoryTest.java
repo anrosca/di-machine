@@ -3,8 +3,7 @@ package com.dimachine.core;
 import com.dimachine.core.annotation.Bean;
 import com.dimachine.core.annotation.Configuration;
 import com.dimachine.core.annotation.Scope;
-import com.dimachine.core.proxy.ConfigurationClassInvocationHandler;
-import com.dimachine.core.proxy.DefaultProxyFactory;
+import com.dimachine.core.proxy.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import test.FooService;
@@ -30,7 +29,12 @@ public class DefaultProxyFactoryTest {
 
     @Test
     public void prototypeBeanMethodsShouldBeCalledOnEveryInvocation() {
-        AppConfig proxiedConfigInstance = (AppConfig) proxyFactory.makeProxy(AppConfig.class, invocationHandler);
+        ProxyTraits proxyTraits = ProxyTraits.builder()
+                .superClass(AppConfig.class)
+                .methodInterceptor(invocationHandler)
+                .methodFilter(new IgnoreObjectMethodsMethodFilter().and(new IncludeBeanMethodsProxyMethodFilter()))
+                .build();
+        AppConfig proxiedConfigInstance = (AppConfig) proxyFactory.makeProxy(proxyTraits);
 
         assertNotNull(proxiedConfigInstance.prototypeService());
         assertNotNull(proxiedConfigInstance.prototypeService());
@@ -44,7 +48,12 @@ public class DefaultProxyFactoryTest {
     public void singletonBeanMethodsShouldBeCalledOnlyOnce() {
         when(beanFactory.getBean("singletonService", FooService.class)).thenReturn(new FooService());
 
-        AppConfig proxiedConfigInstance = (AppConfig) proxyFactory.makeProxy(AppConfig.class, invocationHandler);
+        ProxyTraits proxyTraits = ProxyTraits.builder()
+                .superClass(AppConfig.class)
+                .methodInterceptor(invocationHandler)
+                .methodFilter(new IgnoreObjectMethodsMethodFilter().and(new IncludeBeanMethodsProxyMethodFilter()))
+                .build();
+        AppConfig proxiedConfigInstance = (AppConfig) proxyFactory.makeProxy(proxyTraits);
 
         assertNotNull(proxiedConfigInstance.singletonService());
         assertNotNull(proxiedConfigInstance.singletonService());
@@ -56,7 +65,12 @@ public class DefaultProxyFactoryTest {
 
     @Test
     public void methodsWhichAreNotAnnotatedWithBean_shouldNotBeIntercepted() {
-        AppConfig proxiedConfigInstance = (AppConfig) proxyFactory.makeProxy(AppConfig.class, invocationHandler);
+        ProxyTraits proxyTraits = ProxyTraits.builder()
+                .superClass(AppConfig.class)
+                .methodInterceptor(invocationHandler)
+                .methodFilter(new IgnoreObjectMethodsMethodFilter().and(new IncludeBeanMethodsProxyMethodFilter()))
+                .build();
+        AppConfig proxiedConfigInstance = (AppConfig) proxyFactory.makeProxy(proxyTraits);
 
         proxiedConfigInstance.setValue();
         proxiedConfigInstance.setValue();
