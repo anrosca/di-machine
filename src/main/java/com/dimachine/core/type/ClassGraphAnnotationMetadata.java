@@ -16,4 +16,9 @@ public class ClassGraphAnnotationMetadata implements AnnotationMetadata {
     public String getAnnotationClassName() {
         return classInfo.getName();
     }
+
+    @Override
+    public String toString() {
+        return classInfo.toString();
+    }
 }

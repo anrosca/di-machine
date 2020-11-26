@@ -51,4 +51,9 @@ public class ClassGraphClassMetadata implements ClassMetadata {
         }
         return isSubclass;
     }
+
+    @Override
+    public String toString() {
+        return classInfo.toString();
+    }
 }

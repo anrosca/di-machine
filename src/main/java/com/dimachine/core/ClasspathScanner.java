@@ -40,7 +40,9 @@ public class ClasspathScanner {
             for (Class<?> scannedAnnotation : targetAnnotations) {
                 String routeAnnotation = scannedAnnotation.getName();
                 for (ClassInfo classInfo : scanResult.getClassesWithAnnotation(routeAnnotation)) {
-                    foundComponentClasses.add(new ClassGraphClassMetadata(classInfo));
+                    if (!classInfo.isAnnotation()) {
+                        foundComponentClasses.add(new ClassGraphClassMetadata(classInfo));
+                    }
                 }
             }
         }

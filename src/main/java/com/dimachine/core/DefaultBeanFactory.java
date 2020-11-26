@@ -3,7 +3,6 @@ package com.dimachine.core;
 import com.dimachine.core.annotation.Component;
 import com.dimachine.core.annotation.Configuration;
 import com.dimachine.core.annotation.Import;
-import com.dimachine.core.annotation.Service;
 import com.dimachine.core.locator.ComponentFilter;
 import com.dimachine.core.locator.ComponentPackageLocator;
 import com.dimachine.core.locator.ComponentTraits;
@@ -18,8 +17,7 @@ import java.util.stream.Collectors;
 
 public class DefaultBeanFactory extends AbstractBeanFactory {
     private static final String BEAN_FACTORY_BEAN_NAME = "beanFactory";
-    private static final List<Class<? extends Annotation>> targetAnnotations =
-            List.of(Component.class, Service.class, Configuration.class);
+    private static final List<Class<? extends Annotation>> targetAnnotations = List.of(Component.class);
 
     private final Map<BeanDefinition, Object> singletonBeans = new ConcurrentHashMap<>();
     private final DefaultObjectFactory objectFactory = new DefaultObjectFactory();
