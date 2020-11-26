@@ -47,7 +47,7 @@ public class DefaultObjectFactoryTest {
 
     @Test
     public void shouldBeAbleToMakeSingletonBean_withChoosingConstructorThatCanBeSatisfied() {
-        SimpleBeanDefinition fooServiceDefinition = makeBeanDefinitionFor(ManyConstructorsFooService.class);
+        SimpleBeanDefinition fooServiceDefinition = makeBeanDefinitionFor(TestBarService.class);
         SimpleBeanDefinition barServiceDefinition = makeBeanDefinitionFor(TestFooService.class);
         defaultBeanFactory.registerBeans(fooServiceDefinition, barServiceDefinition);
 
@@ -193,16 +193,20 @@ public class DefaultObjectFactoryTest {
     private static class ManyConstructorsFooService {
         private final TestFooService fooService;
 
+        public ManyConstructorsFooService(TestFooService fooService) {
+            throw new IllegalStateException("There's a greedier constructor that should've been chosen");
+        }
+
         private ManyConstructorsFooService(TestFooService fooService, TestBarService barService) {
             this.fooService = fooService;
         }
 
-        public ManyConstructorsFooService(TestFooService fooService) {
-            this.fooService = Objects.requireNonNull(fooService);
+        private ManyConstructorsFooService(TestFooService fooService, String config) {
+            throw new IllegalStateException("There's a greedier constructor that should've been chosen");
         }
 
-        private ManyConstructorsFooService(TestFooService fooService, String config) {
-            this.fooService = fooService;
+        private ManyConstructorsFooService(TestFooService fooService, String config, TestBarService barService) {
+            throw new IllegalStateException("There's a greedier constructor that should've been chosen");
         }
     }
 }
